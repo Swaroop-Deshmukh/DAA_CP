@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive CDN Traffic Router — C++17 DAA Engine Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #101626;
+      --bg-card: rgba(18, 25, 41, 0.75);
+      --bg-card-hover: rgba(26, 36, 60, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-purple: #a855f7;
+      --color-healthy: #10b981;
+      --color-healthy-bg: rgba(16, 185, 129, 0.15);
+      --color-congested: #f59e0b;
+      --color-congested-bg: rgba(245, 158, 11, 0.15);
+      --color-down: #ef4444;
+      --color-down-bg: rgba(239, 68, 68, 0.18);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 24px rgba(2, 132, 199, 0.45);
+    }
+
+    .brand-title h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #f8fafc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .engine-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: none;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    /* Scenario Deck */
+    .scenarios-deck {
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .deck-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .deck-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .deck-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .scenario-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scenario-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    .scenario-btn.active {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.3), rgba(99, 102, 241, 0.3));
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s;
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .kpi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* Section Split Grid */
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Flow Network Panel */
+    .panel-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-title span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Routing Graph Visualization */
+    .flow-network {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .flow-node-root {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .flow-node-sink {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .flow-edges-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .flow-edge-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .flow-edge-item.active {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .flow-edge-item.down {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.05);
+      opacity: 0.7;
+    }
+
+    .flow-edge-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .flow-pipe {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .flow-pipe-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #2563eb);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .flow-pipe-fill.congested {
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+    }
+
+    .flow-pipe-fill.down {
+      background: #ef4444;
+      width: 0% !important;
+    }
+
+    /* Optimization Details Table */
+    .opt-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .opt-item {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .opt-item-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .opt-item-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-badge.optimal, .status-badge.healthy {
+      background: var(--color-healthy-bg);
+      color: var(--color-healthy);
+    }
+
+    .status-badge.congested, .status-badge.congested_reroute {
+      background: var(--color-congested-bg);
+      color: var(--color-congested);
+    }
+
+    .status-badge.failover, .status-badge.down {
+      background: var(--color-down-bg);
+      color: var(--color-down);
+    }
+
+    .status-badge.insufficient_capacity {
+      background: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Server Cards Grid */
+    .servers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .server-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .server-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .server-card.status-down {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(35, 18, 22, 0.65);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .server-city {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .server-flag {
+      font-size: 20px;
+    }
+
+    .server-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .metrics-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .metric-title {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 3px;
+    }
+
+    .routed-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .routed-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+    }
+
+    .routed-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .progress-section {
+      margin-bottom: 16px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .progress-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-fill.green { background: linear-gradient(90deg, #10b981, #059669); }
+    .progress-fill.yellow { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .progress-fill.red { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 7px 0;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .action-btn.btn-danger:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--color-down);
+      color: var(--color-down);
+    }
+
+    .action-btn.btn-spike:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--color-congested);
+      color: var(--color-congested);
+    }
+
+    /* Adaptive Events & Diff Table */
+    .diff-table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    .diff-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .diff-table th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .diff-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .diff-pos { color: #10b981; font-weight: 600; }
+    .diff-neg { color: #ef4444; font-weight: 600; }
+    .diff-zero { color: var(--text-dim); }
+
+    /* Latency Badge Colors */
+    .lat-good { color: #10b981; }
+    .lat-warn { color: #f59e0b; }
+    .lat-bad { color: #ef4444; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand-title">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <h1>Adaptive CDN Traffic Router</h1>
+          <p>CDN Edge Server Simulator — Phase 6: C++17 Min-Cost Max-Flow Engine Integration</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="engine-badge">
+          <span>⚙ C++17 DAA Core</span>
+        </div>
+        <div class="engine-badge" id="ws-badge" style="color: var(--color-healthy); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1);">
+          <span id="ws-dot">●</span> Live Sync
+        </div>
+        <button id="btn-reset" class="btn" onclick="triggerScenario('reset')">
+          ↺ Reset Baseline
+        </button>
+      </div>
+    </header>
+
+    <!-- Scenario Controls Deck -->
+    <div class="scenarios-deck">
+      <div class="deck-header">
+        <div class="deck-title">
+          <span>🎯 DAA Course Project Verification Scenarios (Executes Native C++ Engine):</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-dim);" id="trigger-reason-label">
+          Trigger: Baseline initialization
+        </div>
+      </div>
+      <div class="deck-buttons">
+        <button class="scenario-btn active" id="btn-scen-normal" onclick="triggerScenario('normal')">
+          1. Normal Traffic
+        </button>
+        <button class="scenario-btn" id="btn-scen-spike" onclick="triggerScenario('spike')">
+          2. Traffic Spike (16k)
+        </button>
+        <button class="scenario-btn" id="btn-scen-pune" onclick="triggerScenario('pune_congestion')">
+          3. Pune Congestion
+        </button>
+        <button class="scenario-btn" id="btn-scen-mumbai" onclick="triggerScenario('mumbai_failure')">
+          4. Mumbai Failure
+        </button>
+        <button class="scenario-btn" id="btn-scen-multi" onclick="triggerScenario('multiple_congestion')">
+          5. Multiple Congestion
+        </button>
+        <button class="scenario-btn" id="btn-scen-overload" onclick="triggerScenario('fleet_overload')">
+          6. Fleet Overload (26k)
+        </button>
+        <button class="scenario-btn" id="btn-scen-recovery" onclick="triggerScenario('fleet_recovery')">
+          7. Fleet Recovery
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. System Overview (KPI Cards) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Routing Status</div>
+        <div id="kpi-routing-status" class="kpi-val" style="color: var(--color-healthy); font-size: 20px;">OPTIMAL</div>
+        <div id="kpi-routing-engine" class="kpi-sub">C++ Min-Cost Max-Flow</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Client Demand</div>
+        <div id="kpi-demand" class="kpi-val">8,000 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
+        <div id="kpi-total-cap" class="kpi-sub">Fleet Capacity: 21,500 req/s</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Routed Flow</div>
+        <div id="kpi-routed" class="kpi-val" style="color: #38bdf8;">8,000 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
+        <div id="kpi-routed-pct" class="kpi-sub">100.0% traffic fulfilled</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Unrouted / Dropped</div>
+        <div id="kpi-unrouted" class="kpi-val" style="color: var(--text-dim);">0 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
+        <div id="kpi-unrouted-sub" class="kpi-sub">Zero dropped requests</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Routing Cost</div>
+        <div id="kpi-total-cost" class="kpi-val">₹298,000</div>
+        <div class="kpi-sub">Multi-objective W = αL + βB</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active Nodes</div>
+        <div id="kpi-active-nodes" class="kpi-val">4 / 4</div>
+        <div id="kpi-avg-lat" class="kpi-sub">Avg Latency: 24.8 ms</div>
+      </div>
+    </div>
+
+    <!-- Middle Split Grid: Flow Network Visualization & MCMF Optimization Details -->
+    <div class="split-grid">
+      <!-- 3. Routing Visualization (Flow Network Model) -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span>🌐 Directed Flow Network Routing Visualization</span>
+          <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">
+            Source (0) ➔ 4 Edge Nodes (1..4) ➔ Origin Sink (5)
+          </span>
+        </div>
+
+        <div class="flow-network">
+          <!-- Ingress Source Node -->
+          <div class="flow-node-root">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase;">
+                Global Client Ingress Source (Node 0)
+              </div>
+              <div id="vis-source-demand" style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
+                Demand: 8,000 req/s
+              </div>
+            </div>
+            <div id="vis-flow-badge" class="status-badge optimal">
+              <div class="status-dot"></div>
+              <span>FULL FLOW ROUTED</span>
+            </div>
+          </div>
+
+          <!-- 4 Parallel Edge Server Paths -->
+          <div class="flow-edges-list" id="vis-edges-container">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Origin Center Sink Node -->
+          <div class="flow-node-sink">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--accent-purple); text-transform: uppercase;">
+                Origin Data Center Sink (Node 5)
+              </div>
+              <div id="vis-sink-received" style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
+                Received: 8,000 req/s
+              </div>
+            </div>
+            <div style="font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);">
+              Residual Capacity Invariant Satisfied
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Optimization Result (MCMF Engine Metrics) -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span>📊 MCMF Optimization & DAA Metrics</span>
+          <span class="engine-badge">SSP + Johnson Potentials</span>
+        </div>
+
+        <div class="opt-metrics">
+          <div class="opt-item">
+            <div class="opt-item-label">Algorithm</div>
+            <div class="opt-item-val" style="font-size: 14px;">Successive Shortest Path</div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-item-label">Shortest Path Subroutine</div>
+            <div class="opt-item-val" style="font-size: 14px;">Dijkstra + Reduced Costs</div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-item-label">Time Complexity Bound</div>
+            <div class="opt-item-val" style="font-size: 14px; color: var(--accent-cyan);">O(K · |E| log |V|), K ≤ 4</div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-item-label">Execution Time</div>
+            <div class="opt-item-val" id="opt-time-val" style="color: var(--color-healthy);">&lt; 0.01 ms</div>
+          </div>
+        </div>
+
+        <!-- 5. Adaptive Events & Reallocation Diff -->
+        <div style="margin-top: 16px;">
+          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between;">
+            <span>Traffic Reallocation Delta (Before ➔ After)</span>
+            <span id="diff-trigger-tag" style="font-size: 11px; color: var(--accent-cyan);">Cycle #1</span>
+          </div>
+
+          <div class="diff-table-container">
+            <table class="diff-table">
+              <thead>
+                <tr>
+                  <th>Server</th>
+                  <th>Prev Alloc</th>
+                  <th>New Alloc</th>
+                  <th>Traffic Shift</th>
+                  <th>Unit Cost</th>
+                </tr>
+              </thead>
+              <tbody id="diff-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. CDN Server Cards (Pune, Mumbai, Delhi, Bangalore) -->
+    <div style="font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+      <span>🖥️ Regional CDN Edge Server Fleet (Telemetry & Assigned Allocations)</span>
+    </div>
+
+    <div class="servers-grid" id="servers-container">
+      <!-- Populated dynamically via JS -->
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let currentScenarioName = "normal";
+
+    function connectWS() {
+      const loc = window.location;
+      const wsUri = (loc.protocol === "https:" ? "wss://" : "ws://") + loc.host + "/ws/telemetry";
+      ws = new WebSocket(wsUri);
+
+      ws.onopen = () => {
+        document.getElementById("ws-badge").style.color = "var(--color-healthy)";
+        document.getElementById("ws-badge").style.borderColor = "rgba(16,185,129,0.3)";
+        document.getElementById("ws-dot").textContent = "●";
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        renderDashboard(data);
+      };
+
+      ws.onclose = () => {
+        document.getElementById("ws-badge").style.color = "var(--color-congested)";
+        document.getElementById("ws-badge").style.borderColor = "rgba(245,158,11,0.3)";
+        document.getElementById("ws-dot").textContent = "○";
+        setTimeout(connectWS, 2000);
+      };
+    }
+
+    // Trigger Scenario on backend (runs C++ DAA engine)
+    async function triggerScenario(name) {
+      currentScenarioName = name;
+      document.querySelectorAll(".scenario-btn").forEach(btn => btn.classList.remove("active"));
+      
+      const btnIdMap = {
+        "normal": "btn-scen-normal",
+        "spike": "btn-scen-spike",
+        "pune_congestion": "btn-scen-pune",
+        "mumbai_failure": "btn-scen-mumbai",
+        "multiple_congestion": "btn-scen-multi",
+        "fleet_overload": "btn-scen-overload",
+        "fleet_recovery": "btn-scen-recovery",
+        "reset": "btn-scen-normal"
+      };
+      const activeBtn = document.getElementById(btnIdMap[name]);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      try {
+        const res = await fetch(`/api/scenario/${name}`, { method: 'POST' });
+        const resData = await res.json();
+        if (resData && resData.routing) {
+          fetchSnapshot();
+        }
+      } catch (err) {
+        console.error("Scenario trigger failed:", err);
+      }
+    }
+
+    async function fetchSnapshot() {
+      try {
+        const res = await fetch('/api/snapshot');
+        const data = await res.json();
+        renderDashboard(data);
+      } catch (err) {
+        console.error("Snapshot fetch failed:", err);
+      }
+    }
+
+    // Render entire dashboard from combined snapshot
+    function renderDashboard(data) {
+      if (!data) return;
+      const tele = data.telemetry || {};
+      const routing = data.routing || {};
+
+      // 1. System Overview KPIs
+      const status = routing.routing_status || tele.fleet_health || "OPTIMAL";
+      const statusEl = document.getElementById("kpi-routing-status");
+      statusEl.textContent = status;
+      if (status === "OPTIMAL" || status === "HEALTHY") statusEl.style.color = "var(--color-healthy)";
+      else if (status.includes("CONGESTED")) statusEl.style.color = "var(--color-congested)";
+      else statusEl.style.color = "var(--color-down)";
+
+      const demand = routing.requested_traffic || tele.total_traffic || 8000;
+      const routed = routing.routed_traffic !== undefined ? routing.routed_traffic : demand;
+      const unrouted = routing.unrouted_traffic !== undefined ? routing.unrouted_traffic : 0;
+      const totalCost = routing.total_cost_rs !== undefined ? routing.total_cost_rs : 0;
+
+      document.getElementById("kpi-demand").innerHTML = `${demand.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
+      document.getElementById("kpi-routed").innerHTML = `${routed.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
+      
+      const unroutedEl = document.getElementById("kpi-unrouted");
+      unroutedEl.innerHTML = `${unrouted.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
+      if (unrouted > 0) {
+        unroutedEl.style.color = "var(--color-down)";
+        document.getElementById("kpi-unrouted-sub").textContent = "Traffic exceeding fleet capacity!";
+      } else {
+        unroutedEl.style.color = "var(--text-dim)";
+        document.getElementById("kpi-unrouted-sub").textContent = "Zero dropped requests";
+      }
+
+      document.getElementById("kpi-total-cost").textContent = `₹${Math.round(totalCost).toLocaleString()}`;
+      document.getElementById("kpi-active-nodes").textContent = `${tele.active_count || 4} / 4`;
+      document.getElementById("kpi-avg-lat").textContent = `Avg Latency: ${tele.avg_latency || 24.8} ms`;
+
+      // Trigger reason label
+      if (routing.trigger_reason) {
+        document.getElementById("trigger-reason-label").textContent = `Event: ${routing.trigger_reason}`;
+      }
+
+      // 3. Flow Network Visualization
+      document.getElementById("vis-source-demand").textContent = `Demand: ${demand.toLocaleString()} req/s`;
+      document.getElementById("vis-sink-received").textContent = `Received: ${routed.toLocaleString()} req/s`;
+
+      const visBadge = document.getElementById("vis-flow-badge");
+      if (unrouted > 0) {
+        visBadge.className = "status-badge insufficient_capacity";
+        visBadge.innerHTML = `<div class="status-dot"></div><span>CAPACITY EXCEEDED (${unrouted.toLocaleString()} DROP)</span>`;
+      } else if (status === "FAILOVER") {
+        visBadge.className = "status-badge failover";
+        visBadge.innerHTML = `<div class="status-dot"></div><span>FAILOVER ACTIVE (100% ROUTED)</span>`;
+      } else if (status === "CONGESTED_REROUTE") {
+        visBadge.className = "status-badge congested_reroute";
+        visBadge.innerHTML = `<div class="status-dot"></div><span>CONGESTION REROUTED</span>`;
+      } else {
+        visBadge.className = "status-badge optimal";
+        visBadge.innerHTML = `<div class="status-dot"></div><span>OPTIMAL MIN-COST FLOW</span>`;
+      }
+
+      // Render flow edge items
+      const edgeContainer = document.getElementById("vis-edges-container");
+      edgeContainer.innerHTML = "";
+
+      const servers = tele.servers || [];
+      const serverDetailsMap = {};
+      if (routing.server_details) {
+        routing.server_details.forEach(s => { serverDetailsMap[s.server] = s; });
+      }
+
+      servers.forEach(s => {
+        const detail = serverDetailsMap[s.name] || {};
+        const assigned = detail.assigned_traffic !== undefined ? detail.assigned_traffic : (s.assigned_traffic || 0);
+        const cap = s.capacity || 5000;
+        const isDown = (s.status === "DOWN" || detail.status === "FAILED");
+        const isCongested = (s.status === "CONGESTED" || detail.status === "CONGESTED");
+        const flowPct = isDown ? 0 : Math.min(100, Math.round((assigned / cap) * 100));
+
+        let edgeClass = "flow-edge-item";
+        if (isDown) edgeClass += " down";
+        else if (assigned > 0) edgeClass += " active";
+
+        let fillClass = "flow-pipe-fill";
+        if (isDown) fillClass += " down";
+        else if (isCongested || flowPct >= 90) fillClass += " congested";
+
+        edgeContainer.innerHTML += `
+          <div class="${edgeClass}">
+            <div class="flow-edge-header">
+              <span>${s.name} Edge</span>
+              <span style="font-family: 'JetBrains Mono', monospace; color: ${isDown ? 'var(--color-down)' : 'var(--accent-cyan)'};">
+                ${isDown ? 'OFFLINE' : `${assigned.toLocaleString()} req/s`}
+              </span>
+            </div>
+            <div class="flow-pipe">
+              <div class="${fillClass}" style="width: ${flowPct}%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">
+              <span>Cap: ${cap.toLocaleString()}</span>
+              <span>Lat: ${isDown ? '∞' : s.latency + 'ms'}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      // 4. MCMF Metrics
+      if (routing.execution_time_ms !== undefined) {
+        document.getElementById("opt-time-val").textContent = `${routing.execution_time_ms.toFixed(3)} ms`;
+      }
+      if (routing.cycle_id !== undefined) {
+        document.getElementById("diff-trigger-tag").textContent = `Cycle #${routing.cycle_id} • ${routing.timestamp || ''}`;
+      }
+
+      // 5. Diff Table
+      const diffTbody = document.getElementById("diff-table-body");
+      diffTbody.innerHTML = "";
+
+      const prevAlloc = routing.previous_allocation || {};
+      const newAlloc = routing.new_allocation || {};
+      const diffAlloc = routing.allocation_diff || {};
+
+      const serverNames = ["Pune", "Mumbai", "Delhi", "Bangalore"];
+      serverNames.forEach(name => {
+        const prev = prevAlloc[name] !== undefined ? prevAlloc[name] : 0;
+        const curr = newAlloc[name] !== undefined ? newAlloc[name] : (serverDetailsMap[name]?.assigned_traffic || 0);
+        const diff = diffAlloc[name] !== undefined ? diffAlloc[name] : (curr - prev);
+        
+        const detail = serverDetailsMap[name] || {};
+        const unitCost = detail.unit_cost_rs !== undefined ? detail.unit_cost_rs.toFixed(2) : "--";
+
+        let diffClass = "diff-zero";
+        let diffStr = `${diff} req/s`;
+        if (typeof diff === "number") {
+          if (diff > 0) { diffClass = "diff-pos"; diffStr = `+${diff.toLocaleString()} req/s`; }
+          else if (diff < 0) { diffClass = "diff-neg"; diffStr = `${diff.toLocaleString()} req/s`; }
+        } else if (typeof diff === "string") {
+          if (diff.startsWith("+")) diffClass = "diff-pos";
+          else if (diff.startsWith("-")) diffClass = "diff-neg";
+          diffStr = `${diff} req/s`;
+        }
+
+        diffTbody.innerHTML += `
+          <tr>
+            <td style="font-weight: 700; color: var(--text-main); font-family: sans-serif;">${name}</td>
+            <td style="color: var(--text-muted);">${prev.toLocaleString()}</td>
+            <td style="color: var(--accent-cyan); font-weight: 600;">${curr.toLocaleString()}</td>
+            <td class="${diffClass}">${diffStr}</td>
+            <td style="color: var(--text-muted);">₹${unitCost}</td>
+          </tr>
+        `;
+      });
+
+      // 2. Server Cards
+      const container = document.getElementById("servers-container");
+      container.innerHTML = "";
+
+      servers.forEach(server => {
+        const detail = serverDetailsMap[server.name] || {};
+        const assignedTraffic = detail.assigned_traffic !== undefined ? detail.assigned_traffic : (server.assigned_traffic || 0);
+
+        const isDown = (server.status === "DOWN" || detail.status === "FAILED");
+        const isCongested = (server.status === "CONGESTED" || detail.status === "CONGESTED");
+        const cardClass = isDown ? "server-card status-down" : "server-card";
+        const badgeClass = isDown ? "status-badge down" : (isCongested ? "status-badge congested" : "status-badge healthy");
+        const statusText = isDown ? "FAILED / DOWN" : (isCongested ? "CONGESTED" : "HEALTHY");
+
+        const loadPct = isDown ? 0 : Math.min(100, Math.round((assignedTraffic / server.capacity) * 100));
+        let progressColor = "green";
+        if (loadPct >= 85 || isCongested) progressColor = "yellow";
+        if (loadPct >= 96 || isDown) progressColor = "red";
+
+        let latDisplay = isDown ? "∞ (DOWN)" : `${server.latency} ms`;
+        let latClass = "lat-good";
+        if (isDown) latClass = "lat-bad";
+        else if (server.latency >= 70) latClass = "lat-bad";
+        else if (server.latency >= 35) latClass = "lat-warn";
+
+        const cityEmoji = { "Pune": "📍", "Mumbai": "🌊", "Delhi": "🏛️", "Bangalore": "💻" }[server.name] || "📍";
+        const unitCostDisplay = detail.unit_cost_rs !== undefined ? detail.unit_cost_rs.toFixed(2) : server.bandwidth_cost.toFixed(2);
+
+        container.innerHTML += `
+          <div class="${cardClass}">
+            <div class="card-header">
+              <div class="server-city">
+                <span class="server-flag">${cityEmoji}</span>
+                <span class="server-name">${server.name}</span>
+              </div>
+              <div class="${badgeClass}">
+                <div class="status-dot"></div>
+                ${statusText}
+              </div>
+            </div>
+
+            <!-- Routed Allocation from C++ MCMF Engine -->
+            <div class="routed-box">
+              <div class="routed-label">MCMF Assigned Route</div>
+              <div class="routed-val" style="color: ${isDown ? 'var(--color-down)' : 'var(--accent-cyan)'};">
+                ${isDown ? '0 req/s' : `${assignedTraffic.toLocaleString()} req/s`}
+              </div>
+            </div>
+
+            <div class="metrics-grid-2x2">
+              <div class="metric-box">
+                <div class="metric-title">Latency</div>
+                <div class="metric-value ${latClass}">${latDisplay}</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-title">Unit Cost (W)</div>
+                <div class="metric-value">₹${unitCostDisplay}</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-title">CPU Utilization</div>
+                <div class="metric-value">${isDown ? '0.0%' : server.cpu_utilization.toFixed(1) + '%'}</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-title">Bandwidth</div>
+                <div class="metric-value">${isDown ? '0.0 Mbps' : server.bandwidth_usage.toFixed(1) + ' Mbps'}</div>
+              </div>
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-header">
+                <span style="color: var(--text-dim); font-size: 11px; font-weight: 600;">CAPACITY UTILIZATION</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+                  ${isDown ? 'OFFLINE' : `${assignedTraffic.toLocaleString()} / ${server.capacity.toLocaleString()} (${loadPct}%)`}
+                </span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill ${progressColor}" style="width: ${loadPct}%;"></div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button class="action-btn btn-spike" onclick="triggerScenario('pune_congestion')" ${isDown ? 'disabled' : ''}>⚡ Congest</button>
+              ${isDown 
+                ? `<button class="action-btn" style="color: var(--color-healthy); border-color: rgba(16,185,129,0.4);" onclick="triggerScenario('fleet_recovery')">↺ Revive</button>`
+                : `<button class="action-btn btn-danger" onclick="triggerScenario('mumbai_failure')">💥 Crash</button>`
+              }
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Page Load
+    window.addEventListener("DOMContentLoaded", () => {
+      connectWS();
+      fetchSnapshot();
+    });
+  </script>
+</body>
+</html>
