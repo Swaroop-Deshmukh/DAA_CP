@@ -666,3 +666,359 @@ void SimulationScenarioRunner::exportTestReport(const std::string& filepath) con
     file.close();
     std::cout << ">> [REPORT EXPORT]: Test report exported to '" << filepath << "'\n";
 }
+
+CounterexampleResult SimulationScenarioRunner::runCounterexampleScenario() {
+    std::cout << "\n========================================================================================\n";
+    std::cout << "         SCENARIO: COUNTEREXAMPLE (GREEDY HEURISTIC VS MIN-COST MAX-FLOW)               \n";
+    std::cout << "========================================================================================\n";
+    std::cout << " Problem Setup:\n";
+    std::cout << "   - Client Region A (Demand: 1000 req/s) can access:\n";
+    std::cout << "       * Server X (Capacity: 1000 req/s, Cost: Rs. 10.00/req)\n";
+    std::cout << "       * Server Y (Capacity: 1000 req/s, Cost: Rs. 25.00/req)\n";
+    std::cout << "   - Client Region B (Demand: 1000 req/s) can ONLY access:\n";
+    std::cout << "       * Server X (Capacity: 1000 req/s, Cost: Rs. 12.00/req)\n";
+    std::cout << "       * NO LINK to Server Y\n";
+    std::cout << "   - Origin Data Center Fallback (Capacity: INF, Penalty: Rs. 150.00/req)\n";
+    std::cout << "   - Total Demand: 2000 req/s | Total Edge Capacity: 2000 req/s\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+
+    CounterexampleResult res;
+    res.totalDemand = 2000;
+
+    // 1. GREEDY HEURISTIC: Region-by-region cheapest-first allocation
+    // Region A evaluated first:
+    //   Options: Server X (cost 10, cap 1000), Server Y (cost 25, cap 1000), Origin (cost 150)
+    //   Region A greedily fills Server X (1000 req/s @ Rs. 10 = Rs. 10,000).
+    //   Server X remaining capacity becomes 0!
+    // Region B evaluated second:
+    //   Options: Server X (cost 12, cap 0 -> FULL!), Server Y (no link), Origin (cost 150)
+    //   Region B is forced to drop to Origin (1000 req/s @ Rs. 150 = Rs. 150,000)!
+    double greedyCostA = 1000.0 * 10.0;
+    double greedyCostB = 1000.0 * 150.0;
+    res.greedyTotalCost = greedyCostA + greedyCostB; // 160,000.0 Rs
+    res.greedyOriginTraffic = 1000;
+    res.greedyAssignments["Region_A"] = "Server_X (1000 req/s @ Rs. 10.00)";
+    res.greedyAssignments["Region_B"] = "ORIGIN FALLBACK (1000 req/s @ Rs. 150.00)";
+
+    // 2. MIN-COST MAX-FLOW (MCMF): Globally optimal multi-path circulation
+    NetworkConfig cfg = NetworkConfig::createCounterexampleTopology();
+    Graph graph;
+    graph.buildFromNetworkConfig(cfg);
+
+    MinCostMaxFlow solver(graph.getNodeCount());
+    auto solveResult = solver.solve(graph, graph.getSourceNode(), graph.getSinkNode(), res.totalDemand);
+    int totalFlow = solveResult.first;
+    long long scaledTotalCost = solveResult.second;
+
+    res.mcmfTotalCost = static_cast<double>(scaledTotalCost) / cfg.costScaleFactor;
+    res.mcmfOriginTraffic = graph.getOriginFlow();
+    res.mcmfFlows = graph.getLinkFlows();
+
+    res.costSavingsPercent = ((res.greedyTotalCost - res.mcmfTotalCost) / res.greedyTotalCost) * 100.0;
+    res.mcmfStrictlyBetter = (res.mcmfTotalCost < res.greedyTotalCost) && (res.mcmfOriginTraffic == 0);
+    res.passedAssertions = (totalFlow == res.totalDemand) && res.mcmfStrictlyBetter;
+
+    // Side-by-side terminal output report
+    std::cout << "\n [SIDE-BY-SIDE ALLOCATION COMPARISON]:\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+    std::cout << std::left
+              << std::setw(12) << "Region"
+              << std::setw(36) << "Greedy Allocation (Cheapest-First)"
+              << std::setw(36) << "MCMF Global Optimal Allocation"
+              << "\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+    std::cout << std::left
+              << std::setw(12) << "Region A"
+              << std::setw(36) << res.greedyAssignments["Region_A"]
+              << std::setw(36) << "Server_Y (1000 req/s @ Rs. 25.00)"
+              << "\n";
+    std::cout << std::left
+              << std::setw(12) << "Region B"
+              << std::setw(36) << res.greedyAssignments["Region_B"]
+              << std::setw(36) << "Server_X (1000 req/s @ Rs. 12.00)"
+              << "\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+    std::cout << std::left
+              << std::setw(12) << "Edge Served"
+              << std::setw(36) << "1,000 req/s (50.0%)"
+              << std::setw(36) << "2,000 req/s (100.0%)"
+              << "\n";
+    std::cout << std::left
+              << std::setw(12) << "Origin Miss"
+              << std::setw(36) << "1,000 req/s (50.0% DROPPED)"
+              << std::setw(36) << "0 req/s (0.0% DROPPED)"
+              << "\n";
+    std::cout << std::left
+              << std::setw(12) << "Total Cost"
+              << std::setw(36) << ("Rs. " + std::to_string(static_cast<int>(res.greedyTotalCost)) + ".00")
+              << std::setw(36) << ("Rs. " + std::to_string(static_cast<int>(res.mcmfTotalCost)) + ".00")
+              << "\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+    std::cout << " Cost Savings by MCMF:       Rs. " << std::fixed << std::setprecision(2)
+              << (res.greedyTotalCost - res.mcmfTotalCost) << " (" << res.costSavingsPercent << "% cheaper!)\n";
+    std::cout << " DAA Algorithmic Insight:   Greedy myopically saturates Server X with Region A, forcing\n"
+              << "                            Region B to pay 15x higher cost at the Origin.\n"
+              << "                            MCMF uses Johnson-potential residual augmenting paths to push\n"
+              << "                            flow across negative residual edges, achieving the global optimum.\n";
+    std::cout << " Counterexample Verdict:    [" << (res.passedAssertions ? "PASS: MCMF STRICTLY SUPERIOR" : "FAIL") << "]\n";
+    std::cout << "========================================================================================\n\n";
+
+    return res;
+}
+
+bool SimulationScenarioRunner::runDefault8RegionNetworkDemo(const std::string& configPath) {
+    std::cout << "\n========================================================================================\n";
+    std::cout << "         DEFAULT 8-REGION, 6-SERVER CDN NETWORK DEMONSTRATION WITH CONVEX BANDS         \n";
+    std::cout << "========================================================================================\n";
+
+    NetworkConfig cfg;
+    if (!configPath.empty()) {
+        cfg = NetworkConfig::loadFromJsonFile(configPath);
+    } else {
+        // Try to load canonical data/default_topology.json
+        cfg = NetworkConfig::loadFromJsonFile("../data/default_topology.json");
+    }
+
+    cfg.printSummary();
+
+    Graph graph;
+    graph.buildFromNetworkConfig(cfg);
+
+    int totalDemand = cfg.getTotalDemand();
+    MinCostMaxFlow solver(graph.getNodeCount());
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+    auto result = solver.solve(graph, graph.getSourceNode(), graph.getSinkNode(), totalDemand);
+    auto endTime = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::micro> duration = endTime - startTime;
+    int flowRouted = result.first;
+    double totalCostRs = static_cast<double>(result.second) / cfg.costScaleFactor;
+
+    std::cout << "\n>> MCMF Solve Completed on 8-Region Network:\n";
+    std::cout << "   - Total Ingress Demand: " << totalDemand << " req/s\n";
+    std::cout << "   - Total Flow Routed:    " << flowRouted << " req/s\n";
+    std::cout << "   - Global Routing Cost:  Rs. " << std::fixed << std::setprecision(2) << totalCostRs << "\n";
+    std::cout << "   - Augmentations (K):    " << solver.getAugmentationCount() << " iterations\n";
+    std::cout << "   - Solver Duration:      " << duration.count() << " microseconds ("
+              << (duration.count() / 1000.0) << " ms)\n";
+
+    graph.printMultiRegionFlowSummary();
+
+    // Verify flow conservation at all intermediate nodes
+    bool flowConsOk = true;
+    for (int u = 1; u <= static_cast<int>(cfg.regions.size() + cfg.servers.size() + 1); ++u) {
+        int inflow = 0, outflow = 0;
+        for (int v = 0; v < graph.getNodeCount(); ++v) {
+            for (const auto& e : graph.getEdges(v)) {
+                if (e.to == u && e.capacity > 0) inflow += e.flow;
+            }
+        }
+        for (const auto& e : graph.getEdges(u)) {
+            if (e.capacity > 0) outflow += e.flow;
+        }
+        if (inflow != outflow) {
+            flowConsOk = false;
+            std::cerr << "!! Flow conservation failed at node " << u << ": inflow=" << inflow << ", outflow=" << outflow << "\n";
+        }
+    }
+
+    std::cout << " Flow Conservation Assertion: " << (flowConsOk ? "[PASS: Inflow == Outflow for all nodes]" : "[FAIL]") << "\n";
+    std::cout << " Feasibility Assertion:       " << (flowRouted == totalDemand ? "[PASS: 100% Demand Routed]" : "[FAIL]") << "\n";
+    std::cout << "========================================================================================\n\n";
+
+    return flowConsOk && (flowRouted == totalDemand);
+}
+
+MinCutResult SimulationScenarioRunner::runMinCutOverloadAnalysis() {
+    std::cout << "\n========================================================================================\n";
+    std::cout << "         PHASE 2a: EDMONDS-KARP MAX-FLOW & MIN-CUT THEOREM EXTRACTION                   \n";
+    std::cout << "         SCENARIO 6: TOTAL FLEET OVERLOAD (WITHOUT ORIGIN FALLBACK)                     \n";
+    std::cout << "========================================================================================\n";
+    std::cout << " Context:\n";
+    std::cout << "   - Traffic Ingress Demand: 26,000 req/s\n";
+    std::cout << "   - Edge Server Fleet Capacity: 21,500 req/s\n";
+    std::cout << "       * Pune:      5,000 req/s (Node 1)\n";
+    std::cout << "       * Mumbai:    6,000 req/s (Node 2)\n";
+    std::cout << "       * Delhi:     5,500 req/s (Node 3)\n";
+    std::cout << "       * Bangalore: 5,000 req/s (Node 4)\n";
+    std::cout << "   - Origin Fallback Edge Removed to expose raw physical edge fleet bottleneck.\n";
+    std::cout << "----------------------------------------------------------------------------------------\n";
+
+    std::vector<CDNServer> servers = {
+        CDNServer(1, "Pune",      "West India",        5000, 25.0, 8.0, 5000),
+        CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0, 6000),
+        CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5, 5500),
+        CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5, 5000)
+    };
+
+    Graph graph;
+    graph.buildFromServers(servers);
+
+    EdmondsKarp ek(graph.getNodeCount());
+    MinCutResult minCut = ek.extractMinCut(graph, Graph::SOURCE_NODE, Graph::SINK_NODE);
+
+    minCut.printReport();
+
+    // Verify Bellman-Ford reference solver produces identical flow and cost on this graph
+    MinCostMaxFlow mcmf(graph.getNodeCount());
+    bool verificationPassed = mcmf.verifyDijkstraAgainstBellmanFord(graph, Graph::SOURCE_NODE, Graph::SINK_NODE, 21500);
+
+    std::cout << " Reference Solver Check: Dijkstra+Potentials vs Bellman-Ford SSP -> ["
+              << (verificationPassed ? "PASS: IDENTICAL FLOW & COST" : "FAIL") << "]\n";
+    std::cout << "========================================================================================\n\n";
+
+    return minCut;
+}
+
+void SimulationScenarioRunner::runStrategyComparisonAcrossAllScenarios() {
+    std::cout << "\n====================================================================================================================================\n";
+    std::cout << "         PHASE 2a: COMPREHENSIVE STRATEGY COMPARISON ACROSS ALL 7 TEST SCENARIOS                                    \n";
+    std::cout << "         Strategies: MCMF (Optimal) vs Round-Robin vs Nearest-Geographic vs Greedy Cheapest-First                  \n";
+    std::cout << "====================================================================================================================================\n";
+
+    BaselineEvaluator evalEngine;
+    std::vector<std::pair<std::string, std::vector<StrategyEvaluation>>> masterResults;
+
+    // Helper lambda to run all 4 strategies for a scenario
+    auto evaluateFleet = [&](const std::string& name, const std::vector<CDNServer>& srvs, int dem) {
+        std::vector<StrategyEvaluation> evals;
+        evals.push_back(evalEngine.evaluateStrategy(RoutingStrategy::MCMF_OPTIMAL, srvs, dem));
+        evals.push_back(evalEngine.evaluateStrategy(RoutingStrategy::ROUND_ROBIN, srvs, dem));
+        evals.push_back(evalEngine.evaluateStrategy(RoutingStrategy::NEAREST_GEOGRAPHIC, srvs, dem));
+        evals.push_back(evalEngine.evaluateStrategy(RoutingStrategy::GREEDY_CHEAPEST, srvs, dem));
+        masterResults.push_back({name, evals});
+    };
+
+    // 1. Scenario 1: Normal Traffic (Demand 8,000 req/s)
+    {
+        std::vector<CDNServer> s1 = {
+            CDNServer(1, "Pune",      "West India",        5000, 25.0, 8.0),
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("1. Normal Traffic", s1, 8000);
+    }
+
+    // 2. Scenario 2: Traffic Spike (Demand 16,000 req/s)
+    {
+        std::vector<CDNServer> s2 = {
+            CDNServer(1, "Pune",      "West India",        5000, 25.0, 8.0),
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("2. Traffic Spike", s2, 16000);
+    }
+
+    // 3. Scenario 3: Pune Congestion (Pune Latency escalated to 95 ms)
+    {
+        std::vector<CDNServer> s3 = {
+            CDNServer(1, "Pune",      "West India",        5000, 95.0, 8.0), // High latency
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("3. Pune Congestion", s3, 10000);
+    }
+
+    // 4. Scenario 4: Mumbai Failure (Mumbai FAILED, cap = 0)
+    {
+        CDNServer mumbai(2, "Mumbai", "West Coastal", 6000, 18.0, 6.0);
+        mumbai.fail();
+        std::vector<CDNServer> s4 = {
+            CDNServer(1, "Pune",      "West India",        5000, 25.0, 8.0),
+            mumbai,
+            CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("4. Mumbai Failure", s4, 12000);
+    }
+
+    // 5. Scenario 5: Multiple Congestion (Pune 95 ms, Delhi 110 ms)
+    {
+        std::vector<CDNServer> s5 = {
+            CDNServer(1, "Pune",      "West India",        5000, 95.0, 8.0),
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 110.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("5. Multi-Congestion", s5, 11000);
+    }
+
+    // 6. Scenario 6: Fleet Overload (Demand 26,000 req/s)
+    {
+        std::vector<CDNServer> s6 = {
+            CDNServer(1, "Pune",      "West India",        5000, 55.0, 8.0),
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 42.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 65.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 50.0, 7.5)
+        };
+        evaluateFleet("6. Fleet Overload", s6, 26000);
+    }
+
+    // 7. Scenario 7: Fleet Recovery (Demand 10,000 req/s, healthy baseline)
+    {
+        std::vector<CDNServer> s7 = {
+            CDNServer(1, "Pune",      "West India",        5000, 25.0, 8.0),
+            CDNServer(2, "Mumbai",    "West Coastal",      6000, 18.0, 6.0),
+            CDNServer(3, "Delhi",     "North India",       5500, 32.0, 8.5),
+            CDNServer(4, "Bangalore", "South Tech Hub",    5000, 24.0, 7.5)
+        };
+        evaluateFleet("7. Fleet Recovery", s7, 10000);
+    }
+
+    // Print the master comparative evaluation matrix
+    BaselineEvaluator::printMasterComparisonMatrix(masterResults);
+}
+
+bool SimulationScenarioRunner::runCacheKnapsackComparison() {
+    return CacheKnapsackOptimizer::runCounterexampleComparison();
+}
+
+void SimulationScenarioRunner::runSpikeForecastComparison() {
+    SpikeForecastRunner::runSpikeComparison();
+}
+
+void SimulationScenarioRunner::runStabilityHysteresisComparison() {
+    StabilityExperimentRunner::run100TickStabilityComparison(100);
+}
+
+AlgorithmTraceReport SimulationScenarioRunner::runTrace3x3Demo(bool printStdout) {
+    NetworkConfig cfg = NetworkConfig::createSmall3Region3ServerTopology();
+    Graph g(cfg.getTotalNodeCount(), cfg.latencyWeight, cfg.bandwidthWeight, cfg.costScaleFactor);
+    g.buildFromNetworkConfig(cfg);
+
+    int source = g.getSourceNode();
+    int sink = g.getSinkNode();
+    int totalDemand = cfg.getTotalDemand();
+
+    AlgorithmTraceReport report;
+    report.topologyName = "Small 3-Region, 3-Server Educational Demonstration Network";
+    report.totalDemand = totalDemand;
+
+    // 1. Min-Cost Max-Flow SSP with step-by-step trace
+    MinCostMaxFlow mcmf(g.getNodeCount());
+    auto mcmfRes = mcmf.solveWithTrace(g, source, sink, totalDemand, report);
+    report.totalRouted = mcmfRes.first;
+    report.totalCost = mcmfRes.second;
+
+    // 2. Edmonds-Karp Max-Flow and Min-Cut extraction with trace (on edge network without origin)
+    NetworkConfig cfgNoOrigin = cfg;
+    cfgNoOrigin.enableOriginFallback = false;
+    Graph gCut(cfgNoOrigin.getTotalNodeCount(), cfgNoOrigin.latencyWeight, cfgNoOrigin.bandwidthWeight, cfgNoOrigin.costScaleFactor);
+    gCut.buildFromNetworkConfig(cfgNoOrigin);
+
+    EdmondsKarp ek(gCut.getNodeCount());
+    ek.extractMinCutWithTrace(gCut, gCut.getSourceNode(), gCut.getSinkNode(), report);
+
+    if (printStdout) {
+        report.printSmall3x3StdoutTrace();
+    }
+
+    return report;
+}
+
+
+

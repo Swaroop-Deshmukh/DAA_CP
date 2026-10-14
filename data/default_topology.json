@@ -1,0 +1,129 @@
+{
+  "name": "Default-8-Region-6-Server-CDN",
+  "latencyWeight": 1.0,
+  "bandwidthWeight": 2.0,
+  "costScaleFactor": 100,
+  "originPenaltyCost": 250.0,
+  "baseTransitCost": 5.0,
+  "regions": [
+    {"name": "Pune", "demand": 1500, "originLatency": 110.0, "originCost": 250.0},
+    {"name": "Mumbai", "demand": 3500, "originLatency": 105.0, "originCost": 250.0},
+    {"name": "Delhi", "demand": 3000, "originLatency": 120.0, "originCost": 250.0},
+    {"name": "Bangalore", "demand": 2500, "originLatency": 115.0, "originCost": 250.0},
+    {"name": "Chennai", "demand": 2000, "originLatency": 125.0, "originCost": 250.0},
+    {"name": "Hyderabad", "demand": 2000, "originLatency": 118.0, "originCost": 250.0},
+    {"name": "Kolkata", "demand": 1500, "originLatency": 135.0, "originCost": 250.0},
+    {"name": "Ahmedabad", "demand": 1200, "originLatency": 115.0, "originCost": 250.0}
+  ],
+  "servers": [
+    {
+      "name": "Mumbai",
+      "capacity": 6000,
+      "bandwidthCost": 6.0,
+      "baseLatency": 10.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    },
+    {
+      "name": "Delhi",
+      "capacity": 5500,
+      "bandwidthCost": 8.5,
+      "baseLatency": 12.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    },
+    {
+      "name": "Bangalore",
+      "capacity": 5000,
+      "bandwidthCost": 7.5,
+      "baseLatency": 12.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    },
+    {
+      "name": "Pune",
+      "capacity": 4000,
+      "bandwidthCost": 8.0,
+      "baseLatency": 15.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    },
+    {
+      "name": "Chennai",
+      "capacity": 4000,
+      "bandwidthCost": 7.0,
+      "baseLatency": 14.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    },
+    {
+      "name": "Kolkata",
+      "capacity": 3500,
+      "bandwidthCost": 9.0,
+      "baseLatency": 18.0,
+      "bands": [
+        {"lowerPct": 0.0, "upperPct": 0.5, "costMultiplier": 1.0},
+        {"lowerPct": 0.5, "upperPct": 0.8, "costMultiplier": 1.5},
+        {"lowerPct": 0.8, "upperPct": 0.95, "costMultiplier": 3.0},
+        {"lowerPct": 0.95, "upperPct": 1.0, "costMultiplier": 8.0}
+      ]
+    }
+  ],
+  "links": [
+    {"fromRegion": "Pune", "toServer": "Pune", "capacity": 4000, "latency": 5.0},
+    {"fromRegion": "Pune", "toServer": "Mumbai", "capacity": 3500, "latency": 12.0},
+    {"fromRegion": "Pune", "toServer": "Bangalore", "capacity": 2500, "latency": 25.0},
+    {"fromRegion": "Pune", "toServer": "Hyderabad", "capacity": 2000, "latency": 22.0},
+    {"fromRegion": "Mumbai", "toServer": "Mumbai", "capacity": 6000, "latency": 5.0},
+    {"fromRegion": "Mumbai", "toServer": "Pune", "capacity": 3500, "latency": 12.0},
+    {"fromRegion": "Mumbai", "toServer": "Ahmedabad", "capacity": 2500, "latency": 18.0},
+    {"fromRegion": "Mumbai", "toServer": "Bangalore", "capacity": 2500, "latency": 28.0},
+    {"fromRegion": "Mumbai", "toServer": "Delhi", "capacity": 2000, "latency": 38.0},
+    {"fromRegion": "Delhi", "toServer": "Delhi", "capacity": 5500, "latency": 5.0},
+    {"fromRegion": "Delhi", "toServer": "Ahmedabad", "capacity": 2500, "latency": 28.0},
+    {"fromRegion": "Delhi", "toServer": "Kolkata", "capacity": 2000, "latency": 35.0},
+    {"fromRegion": "Delhi", "toServer": "Mumbai", "capacity": 2500, "latency": 38.0},
+    {"fromRegion": "Bangalore", "toServer": "Bangalore", "capacity": 5000, "latency": 5.0},
+    {"fromRegion": "Bangalore", "toServer": "Chennai", "capacity": 3500, "latency": 12.0},
+    {"fromRegion": "Bangalore", "toServer": "Hyderabad", "capacity": 2500, "latency": 18.0},
+    {"fromRegion": "Bangalore", "toServer": "Pune", "capacity": 2000, "latency": 25.0},
+    {"fromRegion": "Bangalore", "toServer": "Mumbai", "capacity": 2000, "latency": 28.0},
+    {"fromRegion": "Chennai", "toServer": "Chennai", "capacity": 4000, "latency": 5.0},
+    {"fromRegion": "Chennai", "toServer": "Bangalore", "capacity": 3500, "latency": 12.0},
+    {"fromRegion": "Chennai", "toServer": "Hyderabad", "capacity": 2500, "latency": 20.0},
+    {"fromRegion": "Chennai", "toServer": "Kolkata", "capacity": 2000, "latency": 38.0},
+    {"fromRegion": "Hyderabad", "toServer": "Bangalore", "capacity": 3000, "latency": 18.0},
+    {"fromRegion": "Hyderabad", "toServer": "Chennai", "capacity": 2500, "latency": 20.0},
+    {"fromRegion": "Hyderabad", "toServer": "Pune", "capacity": 2000, "latency": 22.0},
+    {"fromRegion": "Hyderabad", "toServer": "Mumbai", "capacity": 2500, "latency": 26.0},
+    {"fromRegion": "Hyderabad", "toServer": "Delhi", "capacity": 2000, "latency": 40.0},
+    {"fromRegion": "Hyderabad", "toServer": "Kolkata", "capacity": 2000, "latency": 35.0},
+    {"fromRegion": "Kolkata", "toServer": "Kolkata", "capacity": 3500, "latency": 5.0},
+    {"fromRegion": "Kolkata", "toServer": "Delhi", "capacity": 2500, "latency": 35.0},
+    {"fromRegion": "Kolkata", "toServer": "Chennai", "capacity": 2000, "latency": 38.0},
+    {"fromRegion": "Kolkata", "toServer": "Hyderabad", "capacity": 2000, "latency": 35.0},
+    {"fromRegion": "Ahmedabad", "toServer": "Mumbai", "capacity": 3000, "latency": 18.0},
+    {"fromRegion": "Ahmedabad", "toServer": "Pune", "capacity": 2000, "latency": 22.0},
+    {"fromRegion": "Ahmedabad", "toServer": "Delhi", "capacity": 2500, "latency": 28.0}
+  ]
+}

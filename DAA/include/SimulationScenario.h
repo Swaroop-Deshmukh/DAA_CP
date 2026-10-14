@@ -4,8 +4,16 @@
 #include "TrafficSimulator.h"
 #include "Router.h"
 #include "Graph.h"
+#include "GraphConfig.h"
+#include "EdmondsKarp.h"
+#include "Baselines.h"
+#include "CacheKnapsack.h"
+#include "HoltForecast.h"
+#include "StabilityManager.h"
+#include "AlgorithmTrace.h"
 #include <string>
 #include <vector>
+#include <map>
 
 /**
  * Result record for a single scenario execution in DAA validation.
@@ -38,7 +46,29 @@ struct ScenarioResult {
 };
 
 /**
- * Test & demonstration harness for all 7 project scenarios.
+ * Detailed record comparing Greedy Heuristic vs Min-Cost Max-Flow
+ * on the counterexample topology (Phase 1 Requirement 5).
+ */
+struct CounterexampleResult {
+    int totalDemand;
+
+    // Greedy Metrics
+    double greedyTotalCost;
+    int greedyOriginTraffic;
+    std::map<std::string, std::string> greedyAssignments;
+
+    // MCMF Metrics
+    double mcmfTotalCost;
+    int mcmfOriginTraffic;
+    std::map<std::pair<std::string, std::string>, int> mcmfFlows;
+
+    double costSavingsPercent;
+    bool mcmfStrictlyBetter;
+    bool passedAssertions;
+};
+
+/**
+ * Test & demonstration harness for project scenarios.
  */
 class SimulationScenarioRunner {
 private:
@@ -63,7 +93,7 @@ public:
         ScenarioResult& res
     );
 
-    // Individual scenario runners
+    // Individual scenario runners (Legacy 4-Server Preset)
     ScenarioResult runScenario1_NormalTraffic();
     ScenarioResult runScenario2_TrafficSpike();
     ScenarioResult runScenario3_PuneCongestion();
@@ -72,7 +102,31 @@ public:
     ScenarioResult runScenario6_Overload();
     ScenarioResult runScenario7_Recovery();
 
-    // Execute complete end-to-end suite
+    // Phase 1: Counterexample Scenario (Greedy vs MCMF)
+    CounterexampleResult runCounterexampleScenario();
+
+    // Phase 1: Default 8-Region, 6-Server Network Demo with Convex Bands
+    bool runDefault8RegionNetworkDemo(const std::string& configPath = "");
+
+    // Phase 2a: Min-Cut Extraction for Total Fleet Overload
+    MinCutResult runMinCutOverloadAnalysis();
+
+    // Phase 2a: Multi-Strategy Baseline Comparison Suite across All Scenarios
+    void runStrategyComparisonAcrossAllScenarios();
+
+    // Phase 2b: Cache Placement (0/1 Knapsack DP vs Greedy-by-Density)
+    bool runCacheKnapsackComparison();
+
+    // Phase 2b: Traffic Spike Scenario (Reactive vs Proactive Holt Smoothing)
+    void runSpikeForecastComparison();
+
+    // Phase 2b: Router Stability & Hysteresis Benchmark (100 Ticks)
+    void runStabilityHysteresisComparison();
+
+    // Phase 5: Algorithm Trace Mode on 3-Region 3-Server Educational Demonstration
+    AlgorithmTraceReport runTrace3x3Demo(bool printStdout = true);
+
+    // Execute complete end-to-end suite (All 7 legacy scenarios)
     std::vector<ScenarioResult> runAllScenarios();
 
     // Summary table

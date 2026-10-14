@@ -4,6 +4,7 @@
 #include "Graph.h"
 #include "MinCostMaxFlow.h"
 #include "CDNServer.h"
+#include "AlgorithmTrace.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -29,6 +30,7 @@ struct ServerAllocationRecord {
  * Canonical Routing Decision record for React Dashboards and API integrations.
  */
 struct RoutingDecision {
+    int schemaVersion = 2;
     int cycleId;
     std::string timestamp;
     int requestedTraffic;
@@ -43,6 +45,8 @@ struct RoutingDecision {
     std::map<std::string, int> allocationDiff;
     std::vector<ServerAllocationRecord> serverDetails;
     double executionTimeMs;
+    double engineSolveTimeUs;       // Engine solve time in microseconds (Phase 6)
+    std::vector<SSPStepTrace> traceSteps; // Phase 5 Requirement: Algorithm trace array
 
     std::string toJson() const;
 };

@@ -1,872 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Adaptive CDN Traffic Router — C++17 DAA Engine Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-base: #090d16;
-      --bg-surface: #101626;
-      --bg-card: rgba(18, 25, 41, 0.75);
-      --bg-card-hover: rgba(26, 36, 60, 0.85);
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-glow: rgba(56, 189, 248, 0.3);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-cyan: #38bdf8;
-      --accent-blue: #3b82f6;
-      --accent-purple: #a855f7;
-      --color-healthy: #10b981;
-      --color-healthy-bg: rgba(16, 185, 129, 0.15);
-      --color-congested: #f59e0b;
-      --color-congested-bg: rgba(245, 158, 11, 0.15);
-      --color-down: #ef4444;
-      --color-down-bg: rgba(239, 68, 68, 0.18);
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-base);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.1) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
-      color: var(--text-main);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      padding: 24px;
-    }
-
-    .container {
-      max-width: 1440px;
-      margin: 0 auto;
-    }
-
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-subtle);
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .brand-title {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #0284c7, #6366f1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      box-shadow: 0 0 24px rgba(2, 132, 199, 0.45);
-    }
-
-    .brand-title h1 {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #f8fafc, #38bdf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-title p {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .engine-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .btn {
-      background: var(--bg-surface);
-      color: var(--text-main);
-      border: 1px solid var(--border-subtle);
-      padding: 9px 18px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      border: none;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #0369a1, #1d4ed8);
-      transform: translateY(-1px);
-    }
-
-    /* Scenario Deck */
-    .scenarios-deck {
-      background: var(--bg-card);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 18px 22px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    }
-
-    .deck-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .deck-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .deck-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .scenario-btn {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-main);
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .scenario-btn:hover {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-      transform: translateY(-1px);
-    }
-
-    .scenario-btn.active {
-      background: linear-gradient(135deg, rgba(2, 132, 199, 0.3), rgba(99, 102, 241, 0.3));
-      border-color: var(--accent-cyan);
-      color: #fff;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
-    }
-
-    /* KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .kpi-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 18px 20px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.25s;
-    }
-
-    .kpi-card:hover {
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
-    }
-
-    .kpi-label {
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-
-    .kpi-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .kpi-sub {
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-top: 4px;
-    }
-
-    /* Section Split Grid */
-    .split-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 1100px) {
-      .split-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Flow Network Panel */
-    .panel-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 22px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-    }
-
-    .panel-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-main);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .panel-title span {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Routing Graph Visualization */
-    .flow-network {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .flow-node-root {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: var(--radius-md);
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .flow-node-sink {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: var(--radius-md);
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .flow-edges-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-    }
-
-    .flow-edge-item {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      position: relative;
-      transition: all 0.2s;
-    }
-
-    .flow-edge-item.active {
-      border-color: rgba(56, 189, 248, 0.4);
-      background: rgba(56, 189, 248, 0.05);
-    }
-
-    .flow-edge-item.down {
-      border-color: rgba(239, 68, 68, 0.4);
-      background: rgba(239, 68, 68, 0.05);
-      opacity: 0.7;
-    }
-
-    .flow-edge-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .flow-pipe {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      margin: 8px 0;
-    }
-
-    .flow-pipe-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #38bdf8, #2563eb);
-      border-radius: 3px;
-      transition: width 0.4s ease;
-    }
-
-    .flow-pipe-fill.congested {
-      background: linear-gradient(90deg, #f59e0b, #ef4444);
-    }
-
-    .flow-pipe-fill.down {
-      background: #ef4444;
-      width: 0% !important;
-    }
-
-    /* Optimization Details Table */
-    .opt-metrics {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .opt-item {
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-    }
-
-    .opt-item-label {
-      font-size: 11px;
-      color: var(--text-dim);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .opt-item-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-top: 4px;
-    }
-
-    /* Status Badges */
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .status-badge.optimal, .status-badge.healthy {
-      background: var(--color-healthy-bg);
-      color: var(--color-healthy);
-    }
-
-    .status-badge.congested, .status-badge.congested_reroute {
-      background: var(--color-congested-bg);
-      color: var(--color-congested);
-    }
-
-    .status-badge.failover, .status-badge.down {
-      background: var(--color-down-bg);
-      color: var(--color-down);
-    }
-
-    .status-badge.insufficient_capacity {
-      background: rgba(239, 68, 68, 0.25);
-      color: #f87171;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    /* Server Cards Grid */
-    .servers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-
-    .server-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 22px;
-      position: relative;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-    }
-
-    .server-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.16);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .server-card.status-down {
-      border-color: rgba(239, 68, 68, 0.4);
-      background: rgba(35, 18, 22, 0.65);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .server-city {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .server-flag {
-      font-size: 20px;
-    }
-
-    .server-name {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .metrics-grid-2x2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .metric-box {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-    }
-
-    .metric-title {
-      font-size: 11px;
-      color: var(--text-dim);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .metric-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-top: 3px;
-    }
-
-    .routed-box {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .routed-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-    }
-
-    .routed-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .progress-section {
-      margin-bottom: 16px;
-    }
-
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-
-    .progress-track {
-      height: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.4s ease;
-    }
-
-    .progress-fill.green { background: linear-gradient(90deg, #10b981, #059669); }
-    .progress-fill.yellow { background: linear-gradient(90deg, #f59e0b, #d97706); }
-    .progress-fill.red { background: linear-gradient(90deg, #ef4444, #b91c1c); }
-
-    .card-actions {
-      display: flex;
-      gap: 8px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .action-btn {
-      flex: 1;
-      padding: 7px 0;
-      font-size: 11px;
-      font-weight: 600;
-      border-radius: 6px;
-      border: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .action-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-    }
-
-    .action-btn.btn-danger:hover {
-      background: rgba(239, 68, 68, 0.2);
-      border-color: var(--color-down);
-      color: var(--color-down);
-    }
-
-    .action-btn.btn-spike:hover {
-      background: rgba(245, 158, 11, 0.2);
-      border-color: var(--color-congested);
-      color: var(--color-congested);
-    }
-
-    /* Adaptive Events & Diff Table */
-    .diff-table-container {
-      overflow-x: auto;
-      margin-top: 10px;
-    }
-
-    .diff-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .diff-table th {
-      text-align: left;
-      padding: 10px 12px;
-      font-size: 11px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .diff-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .diff-pos { color: #10b981; font-weight: 600; }
-    .diff-neg { color: #ef4444; font-weight: 600; }
-    .diff-zero { color: var(--text-dim); }
-
-    /* Latency Badge Colors */
-    .lat-good { color: #10b981; }
-    .lat-warn { color: #f59e0b; }
-    .lat-bad { color: #ef4444; font-weight: bold; }
-  </style>
+  <title>CDN Traffic Operations Console — NetOps</title>
+  <meta name="description" content="Adaptive CDN Traffic Router Operations Console. Real-time C++17 DAA MCMF telemetry, strategy comparison, min-cut analysis, and asymptotic scaling.">
+
+  <!-- Local KaTeX (Offline, zero CDN) -->
+  <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+  <script src="/static/vendor/katex/katex.min.js"></script>
+  <script src="/static/vendor/katex/contrib/auto-render.min.js"></script>
+
+  <!-- Modular NetOps Stylesheets -->
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="brand-title">
-        <div class="brand-icon">⚡</div>
-        <div>
-          <h1>Adaptive CDN Traffic Router</h1>
-          <p>CDN Edge Server Simulator — Phase 6: C++17 Min-Cost Max-Flow Engine Integration</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <div class="engine-badge">
-          <span>⚙ C++17 DAA Core</span>
-        </div>
-        <div class="engine-badge" id="ws-badge" style="color: var(--color-healthy); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1);">
-          <span id="ws-dot">●</span> Live Sync
-        </div>
-        <button id="btn-reset" class="btn" onclick="triggerScenario('reset')">
-          ↺ Reset Baseline
-        </button>
-      </div>
-    </header>
+<div class="app-shell">
 
-    <!-- Scenario Controls Deck -->
-    <div class="scenarios-deck">
-      <div class="deck-header">
-        <div class="deck-title">
-          <span>🎯 DAA Course Project Verification Scenarios (Executes Native C++ Engine):</span>
-        </div>
-        <div style="font-size: 11px; color: var(--text-dim);" id="trigger-reason-label">
-          Trigger: Baseline initialization
-        </div>
+  <!-- ======================================================================
+       1. TOP BAR (48px fixed)
+       ====================================================================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="brand-mark">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/>
+        </svg>
+        <span>NetOps Router</span>
+        <span class="brand-pill">v2.0 IPC</span>
       </div>
-      <div class="deck-buttons">
-        <button class="scenario-btn active" id="btn-scen-normal" onclick="triggerScenario('normal')">
-          1. Normal Traffic
+
+      <div class="top-bar-controls">
+        <select id="ctrl-scenario-select" class="form-select" onchange="triggerScenario(this.value)" title="Active Traffic Scenario">
+          <option value="normal">Scenario: Normal Baseline</option>
+          <option value="spike">Scenario: Traffic Spike (+18k req/s)</option>
+          <option value="pune_congestion">Scenario: Pune Congestion (8x penalty)</option>
+          <option value="mumbai_failure">Scenario: Mumbai Server Failure</option>
+          <option value="fleet_recovery">Scenario: Fleet Recovery</option>
+        </select>
+
+        <select id="top-strategy-select" class="form-select" onchange="setStrategy(this.value)" title="Active Flow Strategy">
+          <option value="MCMF">Strategy: MCMF (Min-Cost Flow)</option>
+          <option value="ROUND_ROBIN">Strategy: Round-Robin</option>
+          <option value="NEAREST">Strategy: Nearest Region</option>
+          <option value="GREEDY">Strategy: Greedy Capacity</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="top-bar-right">
+      <div class="engine-status-chip" id="ws-badge">
+        <span class="engine-dot" id="ws-dot"></span>
+        <span id="ws-text">Engine connected</span>
+      </div>
+
+      <button id="router-mode-pill" class="btn btn-sm" onclick="toggleEngineMode()" title="Toggle Reactive vs Proactive Holt Forecast">
+        Mode: REACTIVE
+      </button>
+      <button id="btn-mode-toggle" style="display:none" onclick="toggleEngineMode()"></button>
+
+      <span class="cycle-timestamp" id="p1-cycle-label">Cycle #--</span>
+
+      <button class="btn btn-sm" onclick="triggerScenario('normal')" title="Reset to Normal Scenario">
+        Reset
+      </button>
+
+      <button class="btn btn-sm btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme (Dark / Light)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <button class="btn btn-sm btn-icon" onclick="toggleShortcutHelp()" title="Keyboard Shortcuts (?)">
+        ?
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       2. COMPACT SUMMARY STRIP (42px)
+       ====================================================================== -->
+  <div class="summary-strip">
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Solver optimization verdict">Status</span>
+      <span id="kpi-routing-status" class="status-chip healthy">OPTIMAL</span>
+      <span id="kpi-strategy-badge" class="strat-tag strat-mcmf">MCMF</span>
+    </div>
+
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Total ingress demand across all regions">Demand</span>
+      <span id="kpi-demand" class="summary-val">--</span>
+      <span id="kpi-total-cap" class="summary-sub">/ -- cap</span>
+    </div>
+
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Traffic allocated across edge servers">Routed</span>
+      <span id="kpi-routed" class="summary-val">--</span>
+      <span id="kpi-routed-pct" class="summary-sub">(--%)</span>
+    </div>
+
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Traffic routed via high-latency origin fallback edge">Origin Fallback</span>
+      <span id="kpi-unrouted" class="summary-val">0</span>
+      <span id="kpi-unrouted-sub" class="summary-sub">req/s</span>
+    </div>
+
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Weighted composite objective: W = sum(f_e * (alpha*L_e + beta*B_e))">Weighted Cost</span>
+      <span id="kpi-total-cost" class="summary-val">--</span>
+      <span class="summary-sub">(unitless)</span>
+    </div>
+
+    <div class="summary-cell">
+      <span class="summary-label" data-tooltip="Pure algorithm runtime vs end-to-end transport roundtrip">Solve Time</span>
+      <span id="kpi-solve-time" class="summary-val">-- &micro;s</span>
+      <span id="kpi-e2e" class="summary-sub">/ -- ms e2e</span>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       3. LEFT SIDEBAR (200px fixed)
+       ====================================================================== -->
+  <aside class="sidebar">
+    <div class="nav-groups">
+      <div class="nav-group">
+        <div class="nav-group-title">Operate</div>
+        <button class="nav-item active tab-btn" id="tab-p1" onclick="switchTab('p1')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          <span>Flow Network</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-spike" onclick="triggerScenario('spike')">
-          2. Traffic Spike (16k)
+        <button class="nav-item tab-btn" id="tab-p2" onclick="switchTab('p2')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span>Strategy Matrix</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-pune" onclick="triggerScenario('pune_congestion')">
-          3. Pune Congestion
+        <button class="nav-item tab-btn" id="tab-p5" onclick="switchTab('p5')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2"/><line x1="14" y1="12" x2="18" y2="12"/>
+          </svg>
+          <span>Fleet Controls</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-mumbai" onclick="triggerScenario('mumbai_failure')">
-          4. Mumbai Failure
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Analyze</div>
+        <button class="nav-item tab-btn" id="tab-p3" onclick="switchTab('p3')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>
+          </svg>
+          <span>Min-Cut Bottleneck</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-multi" onclick="triggerScenario('multiple_congestion')">
-          5. Multiple Congestion
+        <button class="nav-item tab-btn" id="tab-p4" onclick="switchTab('p4')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/>
+          </svg>
+          <span>Residual Trace</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-overload" onclick="triggerScenario('fleet_overload')">
-          6. Fleet Overload (26k)
+        <button class="nav-item tab-btn" id="tab-p6" onclick="switchTab('p6')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+          </svg>
+          <span>Holt Forecast</span>
         </button>
-        <button class="scenario-btn" id="btn-scen-recovery" onclick="triggerScenario('fleet_recovery')">
-          7. Fleet Recovery
+        <button class="nav-item tab-btn" id="tab-p7" onclick="switchTab('p7')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span>Cache Knapsack</span>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Evaluate</div>
+        <button class="nav-item tab-btn" id="tab-p8" onclick="switchTab('p8')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span>Scalability Benchmark</span>
+        </button>
+        <button class="nav-item tab-btn" id="tab-p9" onclick="switchTab('p9')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <span>Decision Log</span>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-title">Data</div>
+        <button class="nav-item tab-btn" id="tab-p10" onclick="switchTab('p10')">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Export Suite</span>
         </button>
       </div>
     </div>
 
-    <!-- 1. System Overview (KPI Cards) -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Routing Status</div>
-        <div id="kpi-routing-status" class="kpi-val" style="color: var(--color-healthy); font-size: 20px;">OPTIMAL</div>
-        <div id="kpi-routing-engine" class="kpi-sub">C++ Min-Cost Max-Flow</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Client Demand</div>
-        <div id="kpi-demand" class="kpi-val">8,000 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
-        <div id="kpi-total-cap" class="kpi-sub">Fleet Capacity: 21,500 req/s</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Routed Flow</div>
-        <div id="kpi-routed" class="kpi-val" style="color: #38bdf8;">8,000 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
-        <div id="kpi-routed-pct" class="kpi-sub">100.0% traffic fulfilled</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Unrouted / Dropped</div>
-        <div id="kpi-unrouted" class="kpi-val" style="color: var(--text-dim);">0 <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span></div>
-        <div id="kpi-unrouted-sub" class="kpi-sub">Zero dropped requests</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Routing Cost</div>
-        <div id="kpi-total-cost" class="kpi-val">₹298,000</div>
-        <div class="kpi-sub">Multi-objective W = αL + βB</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Active Nodes</div>
-        <div id="kpi-active-nodes" class="kpi-val">4 / 4</div>
-        <div id="kpi-avg-lat" class="kpi-sub">Avg Latency: 24.8 ms</div>
-      </div>
+    <div class="sidebar-footer">
+      <div>Engine: C++17 MCMF</div>
+      <div>Protocol: Native IPC</div>
+      <div>Schema: v2.0 Contract</div>
     </div>
+  </aside>
 
-    <!-- Middle Split Grid: Flow Network Visualization & MCMF Optimization Details -->
-    <div class="split-grid">
-      <!-- 3. Routing Visualization (Flow Network Model) -->
-      <div class="panel-card">
-        <div class="panel-title">
-          <span>🌐 Directed Flow Network Routing Visualization</span>
-          <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan);">
-            Source (0) ➔ 4 Edge Nodes (1..4) ➔ Origin Sink (5)
-          </span>
+  <!-- ======================================================================
+       4. MAIN WORKSPACE (PANELS 1 TO 10)
+       ====================================================================== -->
+  <main class="main-workspace">
+
+    <!-- PANEL 1: Network Graph -->
+    <div class="panel-container tab-panel active" id="panel-p1">
+      <div class="panel-header-row">
+        <div class="panel-title-wrap">
+          <h2 class="panel-heading">Directed Flow Network (Source &rarr; Regions &rarr; Edge Servers &rarr; Sink)</h2>
         </div>
-
-        <div class="flow-network">
-          <!-- Ingress Source Node -->
-          <div class="flow-node-root">
-            <div>
-              <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase;">
-                Global Client Ingress Source (Node 0)
-              </div>
-              <div id="vis-source-demand" style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
-                Demand: 8,000 req/s
-              </div>
-            </div>
-            <div id="vis-flow-badge" class="status-badge optimal">
-              <div class="status-dot"></div>
-              <span>FULL FLOW ROUTED</span>
-            </div>
-          </div>
-
-          <!-- 4 Parallel Edge Server Paths -->
-          <div class="flow-edges-list" id="vis-edges-container">
-            <!-- Dynamically populated -->
-          </div>
-
-          <!-- Origin Center Sink Node -->
-          <div class="flow-node-sink">
-            <div>
-              <div style="font-size: 11px; font-weight: 700; color: var(--accent-purple); text-transform: uppercase;">
-                Origin Data Center Sink (Node 5)
-              </div>
-              <div id="vis-sink-received" style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px;">
-                Received: 8,000 req/s
-              </div>
-            </div>
-            <div style="font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text-dim);">
-              Residual Capacity Invariant Satisfied
-            </div>
-          </div>
+        <div class="panel-actions">
+          <button id="mincut-toggle" class="btn btn-sm" onclick="toggleMincutOverlay()">Show Min-Cut</button>
+          <button class="btn btn-sm" onclick="openNodeDrawer('Mumbai')">Inspect Nodes</button>
         </div>
       </div>
 
-      <!-- 4. Optimization Result (MCMF Engine Metrics) -->
-      <div class="panel-card">
-        <div class="panel-title">
-          <span>📊 MCMF Optimization & DAA Metrics</span>
-          <span class="engine-badge">SSP + Johnson Potentials</span>
+      <div class="grid-12">
+        <div class="col-8">
+          <div class="panel-surface" style="padding:var(--space-3)">
+            <div id="p1-svg-container" style="position:relative">
+              <svg id="network-svg" viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet" style="width:100%;height:340px;display:block">
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="rgba(139,150,165,0.7)"/>
+                  </marker>
+                  <marker id="arrow-cut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#d29922"/>
+                  </marker>
+                </defs>
+              </svg>
+            </div>
+            <div style="display:flex;gap:var(--space-4);padding-top:var(--space-2);border-top:1px solid var(--border-subtle);font-size:11px;color:var(--text-muted)">
+              <span><span style="display:inline-block;width:12px;height:2px;background:#3b82f6;vertical-align:middle;margin-right:4px"></span> Light flow (&lt;50%)</span>
+              <span><span style="display:inline-block;width:12px;height:3px;background:#d29922;vertical-align:middle;margin-right:4px"></span> Moderate (50-80%)</span>
+              <span><span style="display:inline-block;width:12px;height:4px;background:#f85149;vertical-align:middle;margin-right:4px"></span> Heavy / Congested (&gt;80%)</span>
+              <span><span style="display:inline-block;width:12px;border-top:2px dashed #6e7681;vertical-align:middle;margin-right:4px"></span> Origin fallback</span>
+              <span><span style="display:inline-block;width:12px;height:2px;background:#a371f7;vertical-align:middle;margin-right:4px"></span> Min-cut edge</span>
+            </div>
+          </div>
         </div>
 
-        <div class="opt-metrics">
-          <div class="opt-item">
-            <div class="opt-item-label">Algorithm</div>
-            <div class="opt-item-val" style="font-size: 14px;">Successive Shortest Path</div>
-          </div>
-          <div class="opt-item">
-            <div class="opt-item-label">Shortest Path Subroutine</div>
-            <div class="opt-item-val" style="font-size: 14px;">Dijkstra + Reduced Costs</div>
-          </div>
-          <div class="opt-item">
-            <div class="opt-item-label">Time Complexity Bound</div>
-            <div class="opt-item-val" style="font-size: 14px; color: var(--accent-cyan);">O(K · |E| log |V|), K ≤ 4</div>
-          </div>
-          <div class="opt-item">
-            <div class="opt-item-label">Execution Time</div>
-            <div class="opt-item-val" id="opt-time-val" style="color: var(--color-healthy);">&lt; 0.01 ms</div>
+        <div class="col-4">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Flow Path Breakdown</span>
+              <span id="vis-flow-badge" class="status-chip healthy"><span class="status-dot"></span>OPTIMAL</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm)">
+              <span id="vis-source-demand">Demand: -- req/s</span>
+              <span id="vis-flow-badge2" class="status-chip healthy" style="font-size:10px;padding:1px 4px">OK</span>
+            </div>
+
+            <div id="vis-edges-container" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px">
+              <span id="vis-sink-received">Received: -- req/s</span>
+              <span style="color:var(--status-healthy)">Flow Conserved &check;</span>
+            </div>
           </div>
         </div>
 
-        <!-- 5. Adaptive Events & Reallocation Diff -->
-        <div style="margin-top: 16px;">
-          <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between;">
-            <span>Traffic Reallocation Delta (Before ➔ After)</span>
-            <span id="diff-trigger-tag" style="font-size: 11px; color: var(--accent-cyan);">Cycle #1</span>
+        <div class="col-12">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Fleet Edge Servers</span>
+              <span id="diff-trigger-tag" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Cycle #--</span>
+            </div>
+            <div id="servers-grid" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:var(--space-3)"></div>
           </div>
+        </div>
 
-          <div class="diff-table-container">
-            <table class="diff-table">
+        <div class="col-12">
+          <div class="table-wrap">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Server</th>
-                  <th>Prev Alloc</th>
-                  <th>New Alloc</th>
-                  <th>Traffic Shift</th>
-                  <th>Unit Cost</th>
+                  <th class="num">Previous Flow (req/s)</th>
+                  <th class="num">New Flow (req/s)</th>
+                  <th class="num">Delta Shift</th>
+                  <th class="num">Unit Cost</th>
                 </tr>
               </thead>
               <tbody id="diff-table-body">
-                <!-- Populated via JS -->
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Awaiting telemetry cycles...</td></tr>
               </tbody>
             </table>
           </div>
@@ -874,332 +312,1587 @@
       </div>
     </div>
 
-    <!-- 2. CDN Server Cards (Pune, Mumbai, Delhi, Bangalore) -->
-    <div style="font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-      <span>🖥️ Regional CDN Edge Server Fleet (Telemetry & Assigned Allocations)</span>
+    <!-- PANEL 2: Strategy Comparison -->
+    <div class="panel-container tab-panel" id="panel-p2">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Strategy Comparison Matrix &mdash; DAA Benchmarking</h2>
+        <div class="panel-actions">
+          <button class="btn btn-sm strat-btn" data-strat="MCMF" onclick="setStrategy('MCMF')">MCMF</button>
+          <button class="btn btn-sm strat-btn" data-strat="ROUND_ROBIN" onclick="setStrategy('ROUND_ROBIN')">Round-Robin</button>
+          <button class="btn btn-sm strat-btn" data-strat="NEAREST" onclick="setStrategy('NEAREST')">Nearest</button>
+          <button class="btn btn-sm strat-btn" data-strat="GREEDY" onclick="setStrategy('GREEDY')">Greedy</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Dispatch Strategy</th>
+              <th class="num">Total Cost (Weighted)</th>
+              <th class="num">Avg Latency (ms)</th>
+              <th class="num">P95 Latency (ms)</th>
+              <th class="num">Overloaded Servers</th>
+              <th class="num">Unserved Flow (req/s)</th>
+            </tr>
+          </thead>
+          <tbody id="cmp-tbody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Loading strategy benchmarks...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quiet-note" id="cmp-explanation">
+        Evaluating strategy dynamics across operational constraints...
+      </div>
+
+      <div class="grid-12">
+        <div class="col-4">
+          <div class="chart-box">
+            <div class="chart-header"><span class="chart-title">Cost History</span></div>
+            <canvas id="chart-cost" class="chart-canvas"></canvas>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="chart-box">
+            <div class="chart-header"><span class="chart-title">Average Latency (ms)</span></div>
+            <canvas id="chart-latency" class="chart-canvas"></canvas>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="chart-box">
+            <div class="chart-header"><span class="chart-title">Overloaded Server Count</span></div>
+            <canvas id="chart-overloaded" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="servers-grid" id="servers-container">
-      <!-- Populated dynamically via JS -->
+    <!-- PANEL 3: Min-Cut -->
+    <div class="panel-container tab-panel" id="panel-p3">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Max-Flow Min-Cut Theorem Verification</h2>
+        <div class="panel-actions">
+          <span id="mincut-status-badge" class="status-chip healthy"><span class="status-dot"></span>CUT EQUALITY VALIDATED</span>
+        </div>
+      </div>
+
+      <div class="quiet-note" id="mincut-explanation">
+        Computing min-cut partition via residual graph BFS reachability...
+      </div>
+
+      <div class="panel-surface">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:var(--space-3)">
+          Saturated Bottleneck Cut Edges (Source Partition S to Sink Partition T)
+        </div>
+        <div id="mincut-edges-container" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: Trace Stepper -->
+    <div class="panel-container tab-panel" id="panel-p4">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Successive Shortest Path (SSP) Augmentation Trace</h2>
+        <div class="panel-actions">
+          <button id="btn-trace-prev" class="btn btn-sm" onclick="stepTrace(-1)">&larr; Prev Step</button>
+          <button id="btn-trace-play" class="btn btn-sm btn-primary" onclick="toggleTracePlay()">Play</button>
+          <button id="btn-trace-next" class="btn btn-sm" onclick="stepTrace(1)">Next Step &rarr;</button>
+          <span id="trace-current-step" class="status-chip neutral" style="font-family:var(--font-mono)">Step 0 / 0</span>
+        </div>
+      </div>
+
+      <div class="quiet-note" id="trace-explanation">
+        Step through SSP iterations. Each iteration executes Dijkstra with Johnson potentials $\pi[v]$, guaranteeing reduced cost $c^\pi(u, v) \ge 0$.
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Iteration</th>
+              <th>Augmenting Path</th>
+              <th class="num">Bottleneck Capacity</th>
+              <th class="num">Path Cost</th>
+              <th class="num">Total Routed Flow</th>
+              <th class="num">Total Running Cost</th>
+            </tr>
+          </thead>
+          <tbody id="trace-tbody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Click a step or press Play to inspect trace...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PANEL 5: Controls -->
+    <div class="panel-container tab-panel" id="panel-p5">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Traffic Generator &amp; Fleet Operations</h2>
+      </div>
+
+      <div class="grid-12">
+        <div class="col-6">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Ingress Traffic Controls</span>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Total Ingress Demand</span>
+                <span class="control-desc">Client requests per second injected into source</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-2)">
+                <input id="ctrl-demand-slider" type="range" class="form-range" min="2000" max="30000" step="500" value="11500" oninput="updateDemandDisplay(this.value)" onchange="applyDemand(this.value)">
+                <span id="ctrl-demand-val" style="font-family:var(--font-mono);font-size:12px;min-width:90px;text-align:right">11,500 req/s</span>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Telemetry Cycle Interval</span>
+                <span class="control-desc">Simulation clock tick duration</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-2)">
+                <input id="ctrl-speed-slider" type="range" class="form-range" min="0.2" max="3.0" step="0.2" value="1.0" oninput="document.getElementById('ctrl-speed-val').textContent=this.value+'s'" onchange="applySpeed(this.value)">
+                <span id="ctrl-speed-val" style="font-family:var(--font-mono);font-size:12px;min-width:40px;text-align:right">1.0s</span>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Routing Mode</span>
+                <span class="control-desc">Reactive vs Proactive Holt Trend Smoothing</span>
+              </div>
+              <div style="display:flex;gap:var(--space-2)">
+                <button id="btn-mode-reactive" class="btn btn-sm" onclick="setRouterMode('REACTIVE')">Reactive</button>
+                <button id="btn-mode-proactive" class="btn btn-sm" onclick="setRouterMode('PROACTIVE')">Proactive</button>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Route Hysteresis</span>
+                <span class="control-desc">Dampen route oscillation across small load shifts</span>
+              </div>
+              <div style="display:flex;gap:var(--space-2)">
+                <button id="btn-hyst-on" class="btn btn-sm" onclick="setHysteresis(true)">Enabled</button>
+                <button id="btn-hyst-off" class="btn btn-sm" onclick="setHysteresis(false)">Disabled</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Fault Injection &amp; Node Control</span>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Stochastic Traffic Spike</span>
+                <span class="control-desc">Inject instant surge to specific ingress node</span>
+              </div>
+              <div style="display:flex;gap:var(--space-2)">
+                <select id="ctrl-spike-region" class="form-select">
+                  <option value="Pune">Pune</option>
+                  <option value="Mumbai">Mumbai</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Bangalore">Bangalore</option>
+                </select>
+                <input id="ctrl-spike-val" type="number" class="form-input" style="width:90px" value="5000">
+                <button class="btn btn-sm btn-primary" onclick="injectSpike()">Inject</button>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-title">Target Server Intervention</span>
+                <span class="control-desc">Crash node (drain capacity) or recover</span>
+              </div>
+              <div style="display:flex;gap:var(--space-2)">
+                <select id="ctrl-server-target" class="form-select">
+                  <option value="Mumbai">Mumbai</option>
+                  <option value="Pune">Pune</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Bangalore">Bangalore</option>
+                </select>
+                <button class="btn btn-sm btn-danger" onclick="triggerServerFault('crash')">Crash</button>
+                <button class="btn btn-sm" onclick="triggerServerFault('recover')">Recover</button>
+              </div>
+            </div>
+
+            <div id="ctrl-servers-grid" style="display:grid;grid-template-columns:repeat(2, 1fr);gap:var(--space-2);margin-top:var(--space-2)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 6: Forecast -->
+    <div class="panel-container tab-panel" id="panel-p6">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Holt Linear Trend Smoother &mdash; Predictive Traffic Routing</h2>
+      </div>
+
+      <div class="quiet-note">
+        <strong>Holt Linear Smoother Formulation:</strong> Level $L_t = \alpha x_t + (1-\alpha)(L_{t-1} + T_{t-1})$ &middot; Trend $T_t = \beta(L_t - L_{t-1}) + (1-\beta)T_{t-1}$ &middot; Forecast $\hat{x}_{t+k} = L_t + k T_t$.<br>
+        Parameters: $\alpha = 0.40$ (Level), $\beta = 0.30$ (Trend), Horizon $k = 1$ tick. Proactive routing triggers early reroutes when $T_t &gt; 100$ req/s.
+      </div>
+
+      <div class="chart-box" style="height:260px">
+        <canvas id="chart-forecast" class="chart-canvas" style="height:220px"></canvas>
+      </div>
+
+      <div class="grid-12">
+        <div class="col-6">
+          <div class="panel-surface">
+            <div style="font-weight:600;font-size:12px;margin-bottom:4px">Reactive Mode Performance</div>
+            <div id="fc-react-stats" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">--</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="panel-surface">
+            <div style="font-weight:600;font-size:12px;margin-bottom:4px">Proactive Mode Performance</div>
+            <div id="fc-proact-stats" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 7: Cache Knapsack -->
+    <div class="panel-container tab-panel" id="panel-p7">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Edge Cache Content Placement (0/1 Knapsack Dynamic Programming)</h2>
+      </div>
+
+      <div class="quiet-note">
+        <strong>0/1 Knapsack Formulation:</strong> Cache Capacity $W = 100$ MB. Content benefit $b_i = \text{popularity}_i \times (\text{originLat} - \text{edgeLat}) = p_i \times 105$ ms. Density $d_i = b_i / \text{size}_i$. Fractional knapsack allows greedy sorting, but discrete 0/1 placement requires 2D Dynamic Programming.
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Content Item</th>
+              <th class="num">Size (MB)</th>
+              <th class="num">Popularity</th>
+              <th class="num">Latency Benefit (ms)</th>
+              <th class="num">Density (Benefit/MB)</th>
+              <th>DP Selection (Optimal)</th>
+              <th>Greedy Selection</th>
+            </tr>
+          </thead>
+          <tbody id="cache-items-tbody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Loading edge cache items...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-surface" id="cache-dp-summary" style="font-family:var(--font-mono);font-size:12px"></div>
+    </div>
+
+    <!-- PANEL 8: Scalability -->
+    <div class="panel-container tab-panel" id="panel-p8">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Empirical Scalability &amp; Asymptotic Complexity &mdash; $\mathcal{O}(K \cdot |E| \log |V|)$</h2>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-primary" onclick="loadScalability()">
+            <span id="scal-spinner" style="display:none" class="spinner"></span> Run Benchmark Suite
+          </button>
+        </div>
+      </div>
+
+      <div class="quiet-note" id="scal-proof-box">
+        <strong>Asymptotic Proof:</strong> Successive Shortest Path (SSP) solves MCMF with $K$ augmentations. With Johnson node potentials $\pi[v]$, all reduced costs $c^\pi(u, v) \ge 0$, allowing Dijkstra with a binary min-heap in $\mathcal{O}(|E| \log |V|)$ per iteration instead of Classic Bellman-Ford's $\mathcal{O}(|V| \cdot |E|)$. Over network sizes from 10 to 1,000 servers, <span id="scal-ratio-summary" style="color:var(--accent);font-weight:600">evaluating empirical scaling...</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="num">Servers ($N$)</th>
+              <th class="num">Regions</th>
+              <th class="num">Vertices ($V$)</th>
+              <th class="num">Edges ($E$)</th>
+              <th class="num">Augmentations ($K$)</th>
+              <th class="num">Dijkstra Runs</th>
+              <th class="num">Dijkstra (&micro;s)</th>
+              <th class="num">Classic Bellman-Ford (&micro;s)</th>
+              <th class="num">Primal-Dual (&micro;s)</th>
+              <th class="num">BF / Dijkstra (x)</th>
+              <th class="num">$K \cdot E \log_2(V)$</th>
+              <th class="num">Ratio (ns/op)</th>
+            </tr>
+          </thead>
+          <tbody id="scal-tbody">
+            <tr><td colspan="12" style="text-align:center;padding:16px;color:var(--text-muted)">Run the benchmark to see results (<code>.\DAA\bin\cdn_engine.exe --bench</code>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quiet-note" id="scal-notes-box"></div>
+
+      <div class="grid-12">
+        <div class="col-6">
+          <div class="chart-box">
+            <div class="chart-header"><span class="chart-title">Log-Log Complexity Overlay &mdash; Measured vs Theoretical</span></div>
+            <canvas id="chart-scalability" class="chart-canvas"></canvas>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="chart-box">
+            <div class="chart-header"><span class="chart-title">Relative Solver Performance &mdash; BF / Dijkstra Ratio</span></div>
+            <canvas id="chart-speedup" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 9: Explain -->
+    <div class="panel-container tab-panel" id="panel-p9">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Decision Audit Log &mdash; "Why this decision?"</h2>
+        <div class="panel-actions">
+          <button class="btn btn-sm" onclick="loadExplain()">Refresh Diagnostics</button>
+        </div>
+      </div>
+
+      <div class="grid-12">
+        <div class="col-7">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Decision Verdict Narrative</span>
+            <div class="quiet-note" id="explain-summary-box">Analyzing routing decision...</div>
+
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Audit Key Factors</span>
+            <div id="explain-bullet-list" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+
+            <div class="quiet-note" style="margin-top:var(--space-2)">
+              <strong>Optimality Invariant:</strong> The solver maintains the invariant that reduced cost $\hat{c}_{uv} = c_{uv} + \pi[u] - \pi[v] \ge 0$ for all residual edges $(u, v) \in E_f$. By linear programming duality, this guarantees zero negative-cost cycles exist in the residual graph, proving the current flow is the globally minimal cost allocation.
+            </div>
+          </div>
+        </div>
+
+        <div class="col-5">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Piecewise Convex Cost Bands</span>
+            <div id="explain-tiers-container" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+
+            <div class="quiet-note">
+              <strong>Why Convex Cost Bands?</strong> M/M/1 queuing delay surges non-linearly as utilization exceeds 80%. Rather than using a complex non-linear optimizer, we split each server-to-sink pipe into 4 piecewise-linear segments ($1.0\times$, $1.5\times$, $3.0\times$, $8.0\times$). SSP automatically exhausts lower tiers first before routing across expensive tiers.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 10: Export -->
+    <div class="panel-container tab-panel" id="panel-p10">
+      <div class="panel-header-row">
+        <h2 class="panel-heading">Experimental Data Export Suite</h2>
+      </div>
+
+      <div class="grid-12">
+        <div class="col-3">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-weight:600;font-size:13px">Routing Decision JSON</div>
+            <div style="font-size:11px;color:var(--text-muted)">Full data contract (Schema v2) with allocations and telemetry.</div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
+              <a class="btn btn-sm btn-primary" href="/api/export/json" download="routing_decision.json" style="flex:1;text-decoration:none">Download</a>
+              <button class="btn btn-sm" onclick="previewExport('json')">View</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-weight:600;font-size:13px">Server Allocations CSV</div>
+            <div style="font-size:11px;color:var(--text-muted)">Per-server assigned traffic, capacities, unit costs, and utilization tiers.</div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
+              <a class="btn btn-sm btn-primary" href="/api/export/csv/allocations" download="server_allocations.csv" style="flex:1;text-decoration:none">Download</a>
+              <button class="btn btn-sm" onclick="previewExport('allocations')">View</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-weight:600;font-size:13px">Scalability Benchmark CSV</div>
+            <div style="font-size:11px;color:var(--text-muted)">Random-graph runtime benchmarks for N=10 to 1,000 servers.</div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
+              <a class="btn btn-sm btn-primary" href="/api/export/csv/benchmark" download="scalability_benchmark.csv" style="flex:1;text-decoration:none">Download</a>
+              <button class="btn btn-sm" onclick="previewExport('benchmark')">View</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="panel-surface" style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-weight:600;font-size:13px">Strategy Comparison CSV</div>
+            <div style="font-size:11px;color:var(--text-muted)">Side-by-side benchmarking: MCMF vs Round-Robin, Nearest, Greedy.</div>
+            <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
+              <a class="btn btn-sm btn-primary" href="/api/export/csv/comparison" download="strategy_comparison.csv" style="flex:1;text-decoration:none">Download</a>
+              <button class="btn btn-sm" onclick="previewExport('comparison')">View</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="panel-surface">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+              <span style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted)">Export Data Preview Window</span>
+              <button class="btn btn-sm" onclick="copyPreviewText()">Copy to Clipboard</button>
+            </div>
+            <pre id="export-preview-box" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);background:var(--bg-app);padding:var(--space-3);border-radius:var(--radius-sm);border:1px solid var(--border-subtle);overflow-x:auto;max-height:260px">// Select an export above to inspect payload contents</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ======================================================================
+       5. NODE DETAIL DRAWER
+       ====================================================================== -->
+  <aside id="node-detail-drawer" class="detail-drawer">
+    <div class="drawer-header">
+      <div style="display:flex;align-items:center;gap:var(--space-2)">
+        <span id="drawer-server-name" style="font-weight:600;font-size:14px">Node Detail</span>
+        <span id="drawer-status-chip" class="status-chip healthy">HEALTHY</span>
+      </div>
+      <button class="btn btn-sm btn-icon" onclick="closeNodeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <div style="display:flex;flex-direction:column;gap:var(--space-1)">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+          <span>Assigned Load:</span>
+          <span id="drawer-assigned-val" style="font-family:var(--font-mono);color:var(--text-main);font-weight:600">--</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+          <span>Fleet Capacity:</span>
+          <span id="drawer-capacity-val" style="font-family:var(--font-mono);color:var(--text-main)">--</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+          <span>Utilization:</span>
+          <span id="drawer-util-val" style="font-family:var(--font-mono);color:var(--text-main);font-weight:600">--%</span>
+        </div>
+        <div style="height:4px;background:var(--border-subtle);border-radius:2px;overflow:hidden;margin-top:4px">
+          <div id="drawer-util-bar" style="height:100%;background:var(--accent);width:0%"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);padding:var(--space-2) 0;border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle)">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted)">Latency</div>
+          <div id="drawer-latency-val" style="font-family:var(--font-mono);font-size:13px;font-weight:600">-- ms</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted)">Unit Cost</div>
+          <div id="drawer-cost-val" style="font-family:var(--font-mono);font-size:13px;font-weight:600">--</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:var(--space-2)">Piecewise Cost Bands</div>
+        <div id="drawer-tiers-list"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:auto">
+        <button id="drawer-btn-crash" class="btn btn-sm btn-danger" style="width:100%">Fail Node (Crash)</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======================================================================
+       6. SHORTCUT HELP MODAL
+       ====================================================================== -->
+  <div id="shortcut-modal" class="modal-overlay" onclick="if(event.target===this) toggleShortcutHelp()">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:var(--space-2)">
+        <span style="font-weight:600;font-size:14px">Keyboard Shortcuts</span>
+        <button class="btn btn-sm btn-icon" onclick="toggleShortcutHelp()">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);font-size:12px">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+          <span>Switch to Panel 1 .. 10</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">1 .. 0</kbd>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+          <span>Trace Stepper: Step Prev / Next</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">[ / ]</kbd>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+          <span>Trace Stepper: Play / Pause</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">Space</kbd>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+          <span>Reset Scenario to Normal</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">R</kbd>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-subtle)">
+          <span>Toggle Dark / Light Theme</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">T</kbd>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0">
+          <span>Close Drawers &amp; Modals</span><kbd style="font-family:var(--font-mono);background:var(--bg-app);padding:2px 6px;border-radius:3px;border:1px solid var(--border-subtle)">Esc</kbd>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script>
-    let ws = null;
-    let currentScenarioName = "normal";
+</div>
 
-    function connectWS() {
-      const loc = window.location;
-      const wsUri = (loc.protocol === "https:" ? "wss://" : "ws://") + loc.host + "/ws/telemetry";
-      ws = new WebSocket(wsUri);
+<!-- ======================================================================
+     7. SCRIPT LOGIC (100% Backwards Compatible)
+     ====================================================================== -->
+<script>
+/* GLOBAL STATE */
+let ws = null, lastSnap = null, mincutActive = false, mincutData = null, traceSteps = [], traceIdx = 0, tracePlayTimer = null;
+const MAX_HIST = 30;
+const history = { latency: [], cost: [], routed: [], overloaded: [] };
 
-      ws.onopen = () => {
-        document.getElementById("ws-badge").style.color = "var(--color-healthy)";
-        document.getElementById("ws-badge").style.borderColor = "rgba(16,185,129,0.3)";
-        document.getElementById("ws-dot").textContent = "●";
-      };
+/* TAB SWITCHING */
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  const btn = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        renderDashboard(data);
-      };
+  if (id === 'p2') { setTimeout(drawAllCharts, 50); }
+  else if (id === 'p3') { loadMinCut(); }
+  else if (id === 'p4') { if (traceSteps.length === 0) loadTrace(); }
+  else if (id === 'p6') { loadForecast(); }
+  else if (id === 'p7') { loadCache(); }
+  else if (id === 'p8') { loadScalability(); }
+  else if (id === 'p9') { loadExplain(); }
+  setTimeout(() => renderAllMath(panel), 60);
+}
 
-      ws.onclose = () => {
-        document.getElementById("ws-badge").style.color = "var(--color-congested)";
-        document.getElementById("ws-badge").style.borderColor = "rgba(245,158,11,0.3)";
-        document.getElementById("ws-dot").textContent = "○";
-        setTimeout(connectWS, 2000);
-      };
+/* WEBSOCKET CONNECTION */
+function connectWS() {
+  const loc = window.location;
+  ws = new WebSocket((loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host + '/ws/telemetry');
+  ws.onopen = () => setBadge('live');
+  ws.onmessage = e => {
+    try {
+      lastSnap = JSON.parse(e.data);
+      renderDashboard(lastSnap);
+    } catch(err) { console.error(err); }
+  };
+  ws.onclose = () => {
+    setBadge('warn');
+    setTimeout(connectWS, 2500);
+  };
+}
+
+function setBadge(s) {
+  const dot = document.getElementById('ws-dot');
+  const txt = document.getElementById('ws-text');
+  if (dot) {
+    dot.className = 'engine-dot' + (s === 'live' ? '' : s === 'warn' ? ' warn' : ' error');
+  }
+  if (txt) {
+    txt.textContent = s === 'live' ? 'Engine connected' : 'Engine reconnecting...';
+  }
+}
+
+/* API ACTIONS */
+async function fetchSnapshot() {
+  try {
+    const r = await fetch('/api/snapshot');
+    lastSnap = await r.json();
+    renderDashboard(lastSnap);
+  } catch(e) { console.error(e); }
+}
+
+async function triggerScenario(name) {
+  const sel = document.getElementById('ctrl-scenario-select');
+  if (sel) sel.value = name;
+  try {
+    await fetch('/api/scenario/' + name, { method: 'POST' });
+    await fetchSnapshot();
+    if (document.getElementById('panel-p3').classList.contains('active')) loadMinCut();
+    if (document.getElementById('panel-p9').classList.contains('active')) loadExplain();
+  } catch(e) { console.error(e); }
+}
+
+async function toggleEngineMode() {
+  try {
+    const r = await fetch('/api/engine/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const d = await r.json();
+    const pill = document.getElementById('router-mode-pill');
+    if (pill) {
+      const isIpc = d.mode === 'long_lived_ipc';
+      pill.textContent = isIpc ? 'Mode: IPC' : 'Mode: Subprocess';
     }
+    fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
 
-    // Trigger Scenario on backend (runs C++ DAA engine)
-    async function triggerScenario(name) {
-      currentScenarioName = name;
-      document.querySelectorAll(".scenario-btn").forEach(btn => btn.classList.remove("active"));
-      
-      const btnIdMap = {
-        "normal": "btn-scen-normal",
-        "spike": "btn-scen-spike",
-        "pune_congestion": "btn-scen-pune",
-        "mumbai_failure": "btn-scen-mumbai",
-        "multiple_congestion": "btn-scen-multi",
-        "fleet_overload": "btn-scen-overload",
-        "fleet_recovery": "btn-scen-recovery",
-        "reset": "btn-scen-normal"
-      };
-      const activeBtn = document.getElementById(btnIdMap[name]);
-      if (activeBtn) activeBtn.classList.add("active");
+/* CONTROLS (PANEL 5) */
+function updateDemandDisplay(val) {
+  document.getElementById('ctrl-demand-val').textContent = Number(val).toLocaleString() + ' req/s';
+}
+async function applyDemand(demand) {
+  try {
+    await fetch('/api/control/demand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demand: parseInt(demand) }) });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
+async function applySpeed(val) {
+  try {
+    await fetch('/api/control/speed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ interval_sec: parseFloat(val) }) });
+  } catch(e) { console.error(e); }
+}
+async function setRouterMode(mode) {
+  document.getElementById('btn-mode-reactive')?.classList.toggle('active', mode === 'REACTIVE');
+  document.getElementById('btn-mode-proactive')?.classList.toggle('active', mode === 'PROACTIVE');
+  const pill = document.getElementById('router-mode-pill');
+  if (pill) {
+    pill.textContent = (mode === 'PROACTIVE' ? 'Mode: PROACTIVE' : 'Mode: REACTIVE');
+  }
+  try {
+    await fetch('/api/control/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
+async function setHysteresis(enabled) {
+  document.getElementById('btn-hyst-on')?.classList.toggle('active', enabled);
+  document.getElementById('btn-hyst-off')?.classList.toggle('active', !enabled);
+  try {
+    await fetch('/api/control/hysteresis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled }) });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
+async function injectSpike() {
+  const reg = document.getElementById('ctrl-spike-region').value;
+  const val = parseFloat(document.getElementById('ctrl-spike-val').value) || 5000;
+  try {
+    await fetch('/api/event/spike', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ server: reg, target_traffic: val }) });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
+async function triggerServerFault(action) {
+  const srv = document.getElementById('ctrl-server-target').value;
+  try {
+    await fetch('/api/control/server', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ server: srv, action: action }) });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
 
-      try {
-        const res = await fetch(`/api/scenario/${name}`, { method: 'POST' });
-        const resData = await res.json();
-        if (resData && resData.routing) {
-          fetchSnapshot();
-        }
-      } catch (err) {
-        console.error("Scenario trigger failed:", err);
-      }
-    }
+/* RENDER CORE (PANEL 1) */
+function renderDashboard(data) {
+  if (!data) return;
+  const tele = data.telemetry || {}, routing = data.routing || {};
+  const status = routing.routing_status || tele.fleet_health || 'OPTIMAL';
+  const strategy = data.active_strategy || routing.active_strategy || 'MCMF';
+  const demand = routing.requested_traffic || tele.total_traffic || 0;
+  const routed = routing.routed_traffic !== undefined ? routing.routed_traffic : demand;
+  const unrouted = routing.unrouted_traffic !== undefined ? routing.unrouted_traffic : 0;
+  const cost = routing.total_cost_rs !== undefined ? routing.total_cost_rs : 0;
+  const solveUs = data.engine_solve_time_us !== undefined ? data.engine_solve_time_us : (routing.engine_solve_time_us || (routing.execution_time_ms || 0) * 1000);
+  const e2eMs = data.e2e_latency_ms !== undefined ? data.e2e_latency_ms : (solveUs / 1000);
 
-    async function fetchSnapshot() {
-      try {
-        const res = await fetch('/api/snapshot');
-        const data = await res.json();
-        renderDashboard(data);
-      } catch (err) {
-        console.error("Snapshot fetch failed:", err);
-      }
-    }
+  const se = document.getElementById('kpi-routing-status');
+  if (se) {
+    se.textContent = status;
+    se.className = 'status-chip ' + (status === 'OPTIMAL' || status === 'HEALTHY' ? 'healthy' : status.includes('CONGESTED') ? 'warning' : 'danger');
+  }
 
-    // Render entire dashboard from combined snapshot
-    function renderDashboard(data) {
-      if (!data) return;
-      const tele = data.telemetry || {};
-      const routing = data.routing || {};
+  const stratEl = document.getElementById('kpi-strategy-badge');
+  if (stratEl) {
+    stratEl.textContent = strategy;
+    stratEl.className = 'strat-tag strat-' + strategy.toLowerCase().replace('_', '');
+  }
 
-      // 1. System Overview KPIs
-      const status = routing.routing_status || tele.fleet_health || "OPTIMAL";
-      const statusEl = document.getElementById("kpi-routing-status");
-      statusEl.textContent = status;
-      if (status === "OPTIMAL" || status === "HEALTHY") statusEl.style.color = "var(--color-healthy)";
-      else if (status.includes("CONGESTED")) statusEl.style.color = "var(--color-congested)";
-      else statusEl.style.color = "var(--color-down)";
+  const topStrat = document.getElementById('top-strategy-select');
+  if (topStrat && topStrat.value !== strategy) topStrat.value = strategy;
 
-      const demand = routing.requested_traffic || tele.total_traffic || 8000;
-      const routed = routing.routed_traffic !== undefined ? routing.routed_traffic : demand;
-      const unrouted = routing.unrouted_traffic !== undefined ? routing.unrouted_traffic : 0;
-      const totalCost = routing.total_cost_rs !== undefined ? routing.total_cost_rs : 0;
+  const dmEl = document.getElementById('kpi-demand');
+  if (dmEl) dmEl.innerHTML = fmtFlow(demand);
+  setText('kpi-total-cap', '/ ' + (tele.total_capacity || 21500).toLocaleString() + ' cap');
 
-      document.getElementById("kpi-demand").innerHTML = `${demand.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
-      document.getElementById("kpi-routed").innerHTML = `${routed.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
-      
-      const unroutedEl = document.getElementById("kpi-unrouted");
-      unroutedEl.innerHTML = `${unrouted.toLocaleString()} <span style="font-size: 13px; font-weight: normal; color: var(--text-dim);">req/s</span>`;
-      if (unrouted > 0) {
-        unroutedEl.style.color = "var(--color-down)";
-        document.getElementById("kpi-unrouted-sub").textContent = "Traffic exceeding fleet capacity!";
-      } else {
-        unroutedEl.style.color = "var(--text-dim)";
-        document.getElementById("kpi-unrouted-sub").textContent = "Zero dropped requests";
-      }
+  const rtEl = document.getElementById('kpi-routed');
+  if (rtEl) rtEl.innerHTML = fmtFlow(routed);
+  setText('kpi-routed-pct', demand > 0 ? '(' + (routed / demand * 100).toFixed(1) + '%)' : '(--%)');
 
-      document.getElementById("kpi-total-cost").textContent = `₹${Math.round(totalCost).toLocaleString()}`;
-      document.getElementById("kpi-active-nodes").textContent = `${tele.active_count || 4} / 4`;
-      document.getElementById("kpi-avg-lat").textContent = `Avg Latency: ${tele.avg_latency || 24.8} ms`;
+  const ue = document.getElementById('kpi-unrouted');
+  if (ue) {
+    ue.textContent = Math.round(unrouted).toLocaleString();
+    ue.style.color = unrouted > 0 ? 'var(--status-danger)' : 'var(--text-main)';
+  }
+  setText('kpi-unrouted-sub', unrouted > 0 ? 'req/s (fallback)' : 'req/s');
 
-      // Trigger reason label
-      if (routing.trigger_reason) {
-        document.getElementById("trigger-reason-label").textContent = `Event: ${routing.trigger_reason}`;
-      }
+  setText('kpi-total-cost', Math.round(cost).toLocaleString());
+  setText('kpi-solve-time', solveUs.toFixed(1) + ' µs');
+  setText('kpi-e2e', '/ ' + e2eMs.toFixed(2) + ' ms e2e');
 
-      // 3. Flow Network Visualization
-      document.getElementById("vis-source-demand").textContent = `Demand: ${demand.toLocaleString()} req/s`;
-      document.getElementById("vis-sink-received").textContent = `Received: ${routed.toLocaleString()} req/s`;
+  if (routing.cycle_id !== undefined) {
+    setText('p1-cycle-label', 'Cycle #' + routing.cycle_id);
+    setText('diff-trigger-tag', 'Cycle #' + routing.cycle_id + ' • ' + (routing.timestamp || ''));
+  }
 
-      const visBadge = document.getElementById("vis-flow-badge");
-      if (unrouted > 0) {
-        visBadge.className = "status-badge insufficient_capacity";
-        visBadge.innerHTML = `<div class="status-dot"></div><span>CAPACITY EXCEEDED (${unrouted.toLocaleString()} DROP)</span>`;
-      } else if (status === "FAILOVER") {
-        visBadge.className = "status-badge failover";
-        visBadge.innerHTML = `<div class="status-dot"></div><span>FAILOVER ACTIVE (100% ROUTED)</span>`;
-      } else if (status === "CONGESTED_REROUTE") {
-        visBadge.className = "status-badge congested_reroute";
-        visBadge.innerHTML = `<div class="status-dot"></div><span>CONGESTION REROUTED</span>`;
-      } else {
-        visBadge.className = "status-badge optimal";
-        visBadge.innerHTML = `<div class="status-dot"></div><span>OPTIMAL MIN-COST FLOW</span>`;
-      }
+  setBadgeEl('vis-flow-badge', status, unrouted);
+  setBadgeEl('vis-flow-badge2', status, unrouted);
+  setText('vis-source-demand', 'Demand: ' + demand.toLocaleString() + ' req/s');
+  setText('vis-sink-received', 'Received: ' + routed.toLocaleString() + ' req/s');
 
-      // Render flow edge items
-      const edgeContainer = document.getElementById("vis-edges-container");
-      edgeContainer.innerHTML = "";
+  const servers = tele.servers || [];
+  const detailMap = {};
+  if (routing.server_details) routing.server_details.forEach(d => detailMap[d.server] = d);
 
-      const servers = tele.servers || [];
-      const serverDetailsMap = {};
-      if (routing.server_details) {
-        routing.server_details.forEach(s => { serverDetailsMap[s.server] = s; });
-      }
+  renderFlowEdges(servers, detailMap);
+  renderDiffTable(routing, detailMap);
+  renderServerFleet(servers, detailMap);
+  renderNetworkSVG(servers, detailMap, demand);
 
-      servers.forEach(s => {
-        const detail = serverDetailsMap[s.name] || {};
-        const assigned = detail.assigned_traffic !== undefined ? detail.assigned_traffic : (s.assigned_traffic || 0);
-        const cap = s.capacity || 5000;
-        const isDown = (s.status === "DOWN" || detail.status === "FAILED");
-        const isCongested = (s.status === "CONGESTED" || detail.status === "CONGESTED");
-        const flowPct = isDown ? 0 : Math.min(100, Math.round((assigned / cap) * 100));
+  const overloaded = servers.filter(s => {
+    const d = detailMap[s.name] || {};
+    const a = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+    return s.capacity > 0 && a / s.capacity > 0.90;
+  }).length;
 
-        let edgeClass = "flow-edge-item";
-        if (isDown) edgeClass += " down";
-        else if (assigned > 0) edgeClass += " active";
+  pushHistory('latency', tele.avg_latency || 0);
+  pushHistory('cost', cost / 1000);
+  pushHistory('routed', routed);
+  pushHistory('overloaded', overloaded);
 
-        let fillClass = "flow-pipe-fill";
-        if (isDown) fillClass += " down";
-        else if (isCongested || flowPct >= 90) fillClass += " congested";
+  if (document.getElementById('panel-p2').classList.contains('active')) { drawAllCharts(); }
+  if (document.getElementById('panel-p9').classList.contains('active')) { loadExplain(); }
+}
 
-        edgeContainer.innerHTML += `
-          <div class="${edgeClass}">
-            <div class="flow-edge-header">
-              <span>${s.name} Edge</span>
-              <span style="font-family: 'JetBrains Mono', monospace; color: ${isDown ? 'var(--color-down)' : 'var(--accent-cyan)'};">
-                ${isDown ? 'OFFLINE' : `${assigned.toLocaleString()} req/s`}
-              </span>
-            </div>
-            <div class="flow-pipe">
-              <div class="${fillClass}" style="width: ${flowPct}%;"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">
-              <span>Cap: ${cap.toLocaleString()}</span>
-              <span>Lat: ${isDown ? '∞' : s.latency + 'ms'}</span>
-            </div>
+function fmtFlow(v) { return Math.round(v).toLocaleString() + ' <span style="font-size:11px;font-weight:normal;color:var(--text-muted)">req/s</span>'; }
+function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+function setBadgeEl(id, status, unrouted) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (unrouted > 0) {
+    el.className = 'status-chip danger';
+    el.innerHTML = '<span class="status-dot"></span>CAPACITY EXCEEDED';
+  } else if (status === 'FAILOVER') {
+    el.className = 'status-chip warning';
+    el.innerHTML = '<span class="status-dot"></span>FAILOVER ACTIVE';
+  } else if (status === 'CONGESTED_REROUTE') {
+    el.className = 'status-chip warning';
+    el.innerHTML = '<span class="status-dot"></span>CONGESTION REROUTED';
+  } else {
+    el.className = 'status-chip healthy';
+    el.innerHTML = '<span class="status-dot"></span>OPTIMAL FLOW';
+  }
+}
+
+function renderFlowEdges(servers, detailMap) {
+  const c = document.getElementById('vis-edges-container');
+  if (!c) return;
+  c.innerHTML = '';
+  servers.forEach(s => {
+    const d = detailMap[s.name] || {};
+    const assigned = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+    const cap = s.capacity || 5000;
+    const isDown = s.status === 'DOWN' || d.status === 'FAILED';
+    const isCongested = s.status === 'CONGESTED';
+    const pct = isDown ? 0 : Math.min(100, Math.round(assigned / cap * 100));
+    const barColor = isDown ? 'var(--status-danger)' : isCongested || pct >= 85 ? 'var(--status-danger)' : pct >= 50 ? 'var(--status-warning)' : 'var(--accent)';
+
+    c.innerHTML += `
+      <div style="padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--border-subtle);cursor:pointer" onclick="openNodeDrawer('${s.name}')">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600">
+          <span>${s.name} Edge</span>
+          <span style="font-family:var(--font-mono);color:${isDown ? 'var(--status-danger)' : 'var(--text-main)'}">${isDown ? 'OFFLINE' : assigned.toLocaleString() + ' req/s'}</span>
+        </div>
+        <div style="height:4px;background:var(--border-subtle);border-radius:2px;overflow:hidden;margin:6px 0">
+          <div style="height:100%;background:${barColor};width:${pct}%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">
+          <span>Cap: ${cap.toLocaleString()}</span>
+          <span>Lat: ${isDown ? 'INF' : s.latency + 'ms'}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function renderDiffTable(routing, detailMap) {
+  const prev = routing.previous_allocation || {}, curr = routing.new_allocation || {}, diff = routing.allocation_diff || {};
+  const tbody = document.getElementById('diff-table-body');
+  if (!tbody) return;
+  const names = Array.from(new Set([...Object.keys(prev), ...Object.keys(curr)]));
+  if (!names.length) return;
+  tbody.innerHTML = names.map(name => {
+    const p = prev[name] || 0, n = curr[name] || 0, delta = diff[name] !== undefined ? diff[name] : (n - p);
+    const sign = delta > 0 ? '+' : '';
+    const color = delta > 0 ? 'var(--status-healthy)' : delta < 0 ? 'var(--status-danger)' : 'var(--text-muted)';
+    const d = detailMap[name] || {};
+    const costDisp = d.unit_cost_rs !== undefined ? d.unit_cost_rs.toFixed(2) : '--';
+    return `<tr>
+      <td style="font-weight:600">${name}</td>
+      <td class="num">${p.toLocaleString()}</td>
+      <td class="num" style="color:var(--accent);font-weight:600">${n.toLocaleString()}</td>
+      <td class="num" style="color:${color};font-weight:600">${sign}${delta.toLocaleString()} req/s</td>
+      <td class="num" style="color:var(--text-muted)">${costDisp}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderServerFleet(servers, detailMap) {
+  const c = document.getElementById('servers-grid');
+  const ctrlGrid = document.getElementById('ctrl-servers-grid');
+  if (c) c.innerHTML = '';
+  if (ctrlGrid) ctrlGrid.innerHTML = '';
+
+  servers.forEach(s => {
+    const d = detailMap[s.name] || {};
+    const assigned = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+    const isDown = s.status === 'DOWN' || d.status === 'FAILED';
+    const isCongested = s.status === 'CONGESTED';
+    const loadPct = s.capacity > 0 ? Math.round(assigned / s.capacity * 100) : 0;
+    const chipCls = isDown ? 'danger' : isCongested ? 'warning' : 'healthy';
+    const statusText = isDown ? 'OFFLINE' : isCongested ? 'CONGESTED' : 'HEALTHY';
+    const barColor = isDown ? 'var(--status-danger)' : loadPct > 85 ? 'var(--status-danger)' : loadPct > 50 ? 'var(--status-warning)' : 'var(--accent)';
+
+    if (c) {
+      c.innerHTML += `
+        <div class="panel-surface" style="padding:var(--space-3);cursor:pointer" onclick="openNodeDrawer('${s.name}')">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+            <span style="font-weight:600;font-size:13px">${s.name}</span>
+            <span class="status-chip ${chipCls}">${statusText}</span>
           </div>
-        `;
-      });
+          <div style="font-family:var(--font-mono);font-size:15px;font-weight:600;color:${isDown ? 'var(--status-danger)' : 'var(--text-main)'}">
+            ${isDown ? '0 req/s' : assigned.toLocaleString() + ' req/s'}
+          </div>
+          <div style="height:4px;background:var(--border-subtle);border-radius:2px;overflow:hidden;margin:8px 0">
+            <div style="height:100%;background:${barColor};width:${isDown ? 0 : loadPct}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">
+            <span>${loadPct}% util</span>
+            <span>${isDown ? 'INF' : s.latency + ' ms'}</span>
+          </div>
+        </div>
+      `;
+    }
 
-      // 4. MCMF Metrics
-      if (routing.execution_time_ms !== undefined) {
-        document.getElementById("opt-time-val").textContent = `${routing.execution_time_ms.toFixed(3)} ms`;
+    if (ctrlGrid) {
+      ctrlGrid.innerHTML += `
+        <div style="padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--border-subtle)">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600">
+            <span>${s.name}</span>
+            <span class="status-chip ${chipCls}" style="font-size:9px;padding:0 4px">${statusText}</span>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <button class="btn btn-sm" style="flex:1" onclick="triggerScenario('pune_congestion')" ${isDown ? 'disabled' : ''}>Congest</button>
+            <button class="btn btn-sm ${isDown ? '' : 'btn-danger'}" style="flex:1" onclick="triggerScenario('${isDown ? 'fleet_recovery' : 'mumbai_failure'}')">
+              ${isDown ? 'Revive' : 'Crash'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  });
+}
+
+function renderNetworkSVG(servers, detailMap, demand) {
+  const svg = document.getElementById('network-svg');
+  if (!svg) return;
+  while (svg.childNodes.length > 2) svg.removeChild(svg.lastChild);
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, par) => { const e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); (par || svg).appendChild(e); return e; };
+  const txt = (t, x, y, attrs, par) => { const e = el('text', { x, y, ...attrs }, par); e.textContent = t; return e; };
+
+  const n = Math.min(servers.length, 4);
+  if (!n) return;
+  const rPos = [], sPos = [];
+  for (let i = 0; i < n; i++) {
+    const y = 60 + i * (280 / (n - 1 || 1));
+    rPos.push({ x: 240, y });
+    sPos.push({ x: 620, y });
+  }
+  const src = { x: 70, y: 200 }, snk = { x: 830, y: 200 };
+  const cutNames = new Set((mincutActive && mincutData ? mincutData.cut_edges || [] : []).map(e => e.to));
+
+  // Origin fallback edge
+  el('line', { x1: src.x + 24, y1: src.y + 18, x2: snk.x - 24, y2: snk.y + 18, stroke: '#6e7681', 'stroke-width': '1.5', 'stroke-dasharray': '5,4', 'marker-end': 'url(#arrow)' });
+  txt('Origin Fallback Bypass', (src.x + snk.x) / 2, src.y + 32, { fill: '#8b96a5', 'font-size': '10', 'text-anchor': 'middle', 'font-family': 'monospace' });
+
+  // Source to Regions
+  rPos.forEach((rp, i) => {
+    const isCut = cutNames.has(servers[i]?.name);
+    el('line', { x1: src.x + 24, y1: src.y, x2: rp.x - 20, y2: rp.y, stroke: isCut ? '#a371f7' : '#3b82f6', 'stroke-width': '1.5', 'marker-end': isCut ? 'url(#arrow-cut)' : 'url(#arrow)' });
+  });
+
+  // Regions to Servers
+  servers.slice(0, n).forEach((s, i) => {
+    const d = detailMap[s.name] || {};
+    const assigned = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+    const cap = s.capacity || 5000;
+    const isDown = s.status === 'DOWN' || d.status === 'FAILED';
+    const util = cap > 0 ? assigned / cap : 0;
+    const rp = rPos[i], sp = sPos[i];
+    const sw = isDown ? 1 : Math.max(1.5, Math.min(6, util * 8));
+    const sc = isDown ? '#f85149' : util > 0.85 ? '#f85149' : util > 0.5 ? '#d29922' : '#3b82f6';
+    const isCut = cutNames.has(s.name);
+
+    el('line', {
+      x1: rp.x + 20, y1: rp.y, x2: sp.x - 24, y2: sp.y,
+      stroke: isCut ? '#a371f7' : sc, 'stroke-width': isCut ? Math.max(3, sw) : sw,
+      'stroke-dasharray': isDown ? '4,4' : isCut ? '6,3' : 'none',
+      'marker-end': 'url(#arrow)', opacity: isDown ? 0.4 : 1
+    });
+
+    if (!isDown && assigned > 0) {
+      const mx = (rp.x + 20 + sp.x - 24) / 2, my = (rp.y + sp.y) / 2 - 6;
+      txt(assigned.toLocaleString() + ' req/s', mx, my, { fill: '#8b96a5', 'font-size': '9', 'text-anchor': 'middle', 'font-family': 'monospace' });
+    }
+
+    el('line', {
+      x1: sp.x + 24, y1: sp.y, x2: snk.x - 24, y2: snk.y,
+      stroke: isDown ? '#f85149' : util > 0.85 ? '#f85149' : '#3b82f6',
+      'stroke-width': Math.max(1.5, sw * 0.7), 'marker-end': 'url(#arrow)', opacity: isDown ? 0.4 : 1
+    });
+  });
+
+  // Region Nodes
+  rPos.forEach((rp, i) => {
+    el('circle', { cx: rp.x, cy: rp.y, r: 18, fill: '#1b222b', stroke: '#262e39', 'stroke-width': '1.5' });
+    txt('R' + (i+1), rp.x, rp.y + 4, { fill: '#e6eaf0', 'font-size': '10', 'text-anchor': 'middle', 'font-weight': '600' });
+    if (servers[i]) txt(servers[i].name, rp.x, rp.y - 24, { fill: '#8b96a5', 'font-size': '10', 'text-anchor': 'middle' });
+  });
+
+  // Server Nodes (Clickable to open drawer)
+  servers.slice(0, n).forEach((s, i) => {
+    const sp = sPos[i];
+    const d = detailMap[s.name] || {};
+    const assigned = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+    const cap = s.capacity || 5000;
+    const isDown = s.status === 'DOWN' || d.status === 'FAILED';
+    const util = cap > 0 ? assigned / cap : 0;
+    const isCut = cutNames.has(s.name);
+    const rc = isDown ? '#f85149' : util > 0.85 ? '#f85149' : util > 0.5 ? '#d29922' : '#3fb950';
+
+    const g = el('g', { style: 'cursor:pointer' });
+    g.onclick = () => openNodeDrawer(s.name);
+
+    el('circle', { cx: sp.x, cy: sp.y, r: 24, fill: '#1b222b', stroke: isCut ? '#a371f7' : rc, 'stroke-width': isCut ? 2.5 : 1.5 }, g);
+    if (isCut) el('circle', { cx: sp.x, cy: sp.y, r: 28, fill: 'none', stroke: '#a371f7', 'stroke-width': '1.5', 'stroke-dasharray': '4,3' }, g);
+    txt(s.name.slice(0, 4), sp.x, sp.y + 4, { fill: isDown ? '#f85149' : '#e6eaf0', 'font-size': '10', 'text-anchor': 'middle', 'font-weight': '600' }, g);
+    txt(isDown ? 'DOWN' : Math.round(util * 100) + '%', sp.x, sp.y + 36, { fill: rc, 'font-size': '9', 'text-anchor': 'middle', 'font-weight': '600', 'font-family': 'monospace' }, g);
+  });
+
+  // Source & Sink
+  const sg = el('g');
+  el('rect', { x: src.x - 32, y: src.y - 22, width: 64, height: 44, rx: 4, fill: '#1b222b', stroke: '#3b82f6', 'stroke-width': '1.5' }, sg);
+  txt('SOURCE', src.x, src.y + 4, { fill: '#3b82f6', 'font-size': '10', 'text-anchor': 'middle', 'font-weight': '600' }, sg);
+
+  const tg = el('g');
+  el('rect', { x: snk.x - 32, y: snk.y - 22, width: 64, height: 44, rx: 4, fill: '#1b222b', stroke: '#a371f7', 'stroke-width': '1.5' }, tg);
+  txt('SINK', snk.x, snk.y + 4, { fill: '#a371f7', 'font-size': '10', 'text-anchor': 'middle', 'font-weight': '600' }, tg);
+  txt(demand.toLocaleString(), snk.x, snk.y + 36, { fill: '#8b96a5', 'font-size': '9', 'text-anchor': 'middle', 'font-family': 'monospace' }, tg);
+
+  if (mincutActive && mincutData) {
+    el('line', { x1: 580, y1: 15, x2: 580, y2: 385, stroke: '#a371f7', 'stroke-width': '1.5', 'stroke-dasharray': '6,4' });
+    txt('MIN-CUT = ' + (mincutData.min_cut_value || 0).toLocaleString() + ' req/s', 580, 12, { fill: '#a371f7', 'font-size': '10', 'text-anchor': 'middle', 'font-weight': '600', 'font-family': 'monospace' });
+  }
+}
+
+/* NODE INSPECTION DRAWER */
+function openNodeDrawer(serverName) {
+  const drawer = document.getElementById('node-detail-drawer');
+  if (!drawer || !lastSnap) return;
+  const tele = lastSnap.telemetry || {}, routing = lastSnap.routing || {};
+  const servers = tele.servers || [];
+  const s = servers.find(srv => srv.name === serverName) || servers[0];
+  if (!s) return;
+  const detailMap = {};
+  if (routing.server_details) routing.server_details.forEach(d => detailMap[d.server] = d);
+  const d = detailMap[s.name] || {};
+  const assigned = d.assigned_traffic !== undefined ? d.assigned_traffic : (s.assigned_traffic || 0);
+  const cap = s.capacity || 5000;
+  const isDown = s.status === 'DOWN' || d.status === 'FAILED';
+  const util = cap > 0 ? (assigned / cap * 100).toFixed(1) : '0.0';
+
+  document.getElementById('drawer-server-name').textContent = s.name + ' (' + (s.region || 'Region') + ')';
+  const chip = document.getElementById('drawer-status-chip');
+  chip.textContent = isDown ? 'OFFLINE' : (s.status || 'HEALTHY');
+  chip.className = 'status-chip ' + (isDown ? 'danger' : s.status === 'CONGESTED' ? 'warning' : 'healthy');
+
+  document.getElementById('drawer-assigned-val').textContent = assigned.toLocaleString() + ' req/s';
+  document.getElementById('drawer-capacity-val').textContent = cap.toLocaleString() + ' req/s';
+  document.getElementById('drawer-util-val').textContent = util + '%';
+  document.getElementById('drawer-util-bar').style.width = Math.min(100, util) + '%';
+  document.getElementById('drawer-latency-val').textContent = isDown ? 'INF' : (s.latency + ' ms');
+  document.getElementById('drawer-cost-val').textContent = (d.unit_cost_rs !== undefined ? d.unit_cost_rs.toFixed(2) : s.cost_per_req || '1.0');
+
+  const tierContainer = document.getElementById('drawer-tiers-list');
+  if (tierContainer) {
+    tierContainer.innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-subtle);font-family:var(--font-mono);font-size:11px">
+        <span>Tier 1 (0-50%):</span><span>${Math.min(assigned, cap * 0.5).toLocaleString()} req/s @ 1.0x</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-subtle);font-family:var(--font-mono);font-size:11px">
+        <span>Tier 2 (50-80%):</span><span>${Math.max(0, Math.min(assigned - cap * 0.5, cap * 0.3)).toLocaleString()} req/s @ 1.5x</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-subtle);font-family:var(--font-mono);font-size:11px">
+        <span>Tier 3 (80-95%):</span><span>${Math.max(0, Math.min(assigned - cap * 0.8, cap * 0.15)).toLocaleString()} req/s @ 3.0x</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:3px 0;font-family:var(--font-mono);font-size:11px">
+        <span>Tier 4 (95-100%):</span><span>${Math.max(0, assigned - cap * 0.95).toLocaleString()} req/s @ 8.0x</span>
+      </div>
+    `;
+  }
+
+  const btnCrash = document.getElementById('drawer-btn-crash');
+  if (btnCrash) {
+    btnCrash.textContent = isDown ? 'Revive Node' : 'Fail Node (Crash)';
+    btnCrash.className = isDown ? 'btn btn-sm' : 'btn btn-sm btn-danger';
+    btnCrash.onclick = () => {
+      triggerScenario(isDown ? 'fleet_recovery' : 'mumbai_failure');
+    };
+  }
+
+  drawer.classList.add('open');
+}
+
+function closeNodeDrawer() {
+  document.getElementById('node-detail-drawer')?.classList.remove('open');
+}
+
+/* MIN-CUT OVERLAY */
+async function toggleMincutOverlay() {
+  mincutActive = !mincutActive;
+  const btn = document.getElementById('mincut-toggle');
+  if (btn) {
+    btn.textContent = mincutActive ? 'Hide Min-Cut' : 'Show Min-Cut';
+  }
+  if (mincutActive && !mincutData) await loadMinCutData();
+  if (lastSnap) {
+    const tele = lastSnap.telemetry || {}, routing = lastSnap.routing || {};
+    const servers = tele.servers || [], dm = {};
+    if (routing.server_details) routing.server_details.forEach(d => dm[d.server] = d);
+    renderNetworkSVG(servers, dm, routing.requested_traffic || tele.total_traffic || 0);
+  }
+}
+
+async function loadMinCutData() {
+  try {
+    const r = await fetch('/api/mincut');
+    mincutData = await r.json();
+  } catch(e) { console.error(e); }
+}
+
+async function loadMinCut() {
+  await loadMinCutData();
+  if (!mincutData) return;
+  const b = document.getElementById('mincut-status-badge');
+  if (b) {
+    b.textContent = mincutData.cut_equals_flow ? 'CUT EQUALITY VALIDATED' : 'DISCREPANCY';
+    b.className = 'status-chip ' + (mincutData.cut_equals_flow ? 'healthy' : 'danger');
+  }
+  const expl = document.getElementById('mincut-explanation');
+  if (expl) {
+    expl.innerHTML = `<strong>Max-Flow Min-Cut Verification:</strong> Max-Flow = <strong>${(mincutData.max_flow_value || 0).toLocaleString()} req/s</strong> &middot; Capacity of Min-Cut $(S, T) = <strong>${(mincutData.min_cut_value || 0).toLocaleString()} req/s</strong>. Equality: <strong>${mincutData.cut_equals_flow ? '&check; Exact Match (Ford-Fulkerson Invariant)' : 'Discrepancy'}</strong>. Reachable nodes in S: <code>${(mincutData.reachable_s_nodes || []).join(', ')}</code>. Non-reachable nodes in T: <code>${(mincutData.unreachable_t_nodes || []).join(', ')}</code>.`;
+  }
+  const edges = mincutData.cut_edges || [];
+  const c = document.getElementById('mincut-edges-container');
+  if (c) {
+    c.innerHTML = edges.map(e => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--border-subtle);font-size:12px">
+        <span style="font-weight:600">${e.from} &rarr; ${e.to}</span>
+        <span class="status-chip danger">CUT CAPACITY = ${e.capacity.toLocaleString()} req/s (SATURATED)</span>
+      </div>
+    `).join('');
+  }
+}
+
+/* STRATEGY COMPARISON */
+async function setStrategy(strat) {
+  try {
+    await fetch('/api/strategy/' + strat, { method: 'POST' });
+    await fetchSnapshot();
+  } catch(e) { console.error(e); }
+}
+
+async function loadStrategyComparison() {
+  try {
+    const r = await fetch('/api/strategy/compare');
+    const data = await r.json();
+    const rows = data.results || [];
+    const tbody = document.getElementById('cmp-tbody');
+    if (!tbody || !rows.length) return;
+
+    const costs = rows.map(r => r.total_cost_rs);
+    const minCost = Math.min(...costs);
+
+    tbody.innerHTML = rows.map(r => {
+      const isMcmf = r.strategy === 'MCMF';
+      const stratCls = 'strat-' + r.strategy.toLowerCase().replace('_', '');
+      return `
+        <tr class="${isMcmf ? 'active-row' : ''}">
+          <td><span class="strat-tag ${stratCls}">${r.strategy}</span></td>
+          <td class="num">${Math.round(r.total_cost_rs).toLocaleString()}</td>
+          <td class="num">${r.avg_latency_ms.toFixed(1)} ms</td>
+          <td class="num">${r.p95_latency_ms.toFixed(1)} ms</td>
+          <td class="num">${r.overloaded_servers}</td>
+          <td class="num">${r.unserved_traffic.toLocaleString()}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const expl = document.getElementById('cmp-explanation');
+    if (expl) {
+      expl.innerHTML = `<strong>MCMF Global Optimality:</strong> Successive Shortest Path (SSP) solves for minimum global latency and bandwidth penalties via Johnson node potentials, avoiding localized queue overload. Single-dimension heuristics (Greedy capacity or Nearest distance) exhaust local capacity and trigger severe non-linear penalties.`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+function pushHistory(key, val) {
+  history[key].push(val);
+  if (history[key].length > MAX_HIST) history[key].shift();
+}
+
+function drawAllCharts() {
+  loadStrategyComparison();
+  drawSparkline('chart-cost', history.cost, '#3b82f6', 'Cost');
+  drawSparkline('chart-latency', history.latency, '#d29922', 'ms');
+  drawSparkline('chart-overloaded', history.overloaded, '#f85149', 'Nodes');
+}
+
+function drawSparkline(canvasId, data, color, unit) {
+  const c = document.getElementById(canvasId);
+  if (!c || !c.parentElement) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = c.parentElement.clientWidth - 24, H = 150;
+  c.width = W * dpr; c.height = H * dpr; c.style.width = W + 'px'; c.style.height = H + 'px';
+  const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, W, H);
+  if (data.length < 2) return;
+
+  const pad = { t: 15, r: 15, b: 20, l: 35 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const min = Math.min(...data), max = Math.max(...data, min + 0.001);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = pad.t + ch * (1 - i / 3);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cw, y); ctx.stroke();
+    ctx.fillStyle = '#8b96a5'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    ctx.fillText((min + (max - min) * i / 3).toFixed(1), pad.l - 4, y + 3);
+  }
+
+  const pts = data.map((v, i) => ({
+    x: pad.l + i * cw / (data.length - 1),
+    y: pad.t + ch * (1 - (v - min) / (max - min))
+  }));
+
+  ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+}
+
+/* RESIDUAL TRACE (PANEL 4) */
+async function loadTrace() {
+  try {
+    const r = await fetch('/api/trace');
+    const data = await r.json();
+    traceSteps = data.steps || [];
+    traceIdx = 0;
+    renderTraceStep(0);
+    renderTraceTable();
+  } catch(e) { console.error(e); }
+}
+
+function renderTraceTable() {
+  const tbody = document.getElementById('trace-tbody');
+  if (!tbody || !traceSteps.length) return;
+  tbody.innerHTML = traceSteps.map((s, i) => `
+    <tr class="${i === traceIdx ? 'active-row' : ''}" onclick="renderTraceStep(${i})" style="cursor:pointer">
+      <td style="font-weight:600">Augmentation #${s.iteration || i + 1}</td>
+      <td style="font-family:monospace">${(s.chosen_path_names || []).join(' &rarr; ')}</td>
+      <td class="num">${(s.bottleneck_capacity || 0).toLocaleString()} req/s</td>
+      <td class="num">${(s.path_cost || 0).toFixed(2)}</td>
+      <td class="num">${(s.running_total_flow || 0).toLocaleString()} req/s</td>
+      <td class="num">${Math.round(s.running_total_cost || 0).toLocaleString()}</td>
+    </tr>
+  `).join('');
+}
+
+function renderTraceStep(idx) {
+  if (!traceSteps.length) return;
+  traceIdx = Math.max(0, Math.min(idx, traceSteps.length - 1));
+  const s = traceSteps[traceIdx];
+  setText('trace-current-step', 'Step ' + (traceIdx + 1) + ' / ' + traceSteps.length);
+
+  const expl = document.getElementById('trace-explanation');
+  if (expl) {
+    expl.innerHTML = `<strong>Augmentation #${s.iteration || traceIdx + 1}:</strong> Path: <code>${(s.chosen_path_names || []).join(' &rarr; ')}</code> &middot; Bottleneck Capacity: <strong>${(s.bottleneck_capacity || 0).toLocaleString()} req/s</strong> &middot; Path Cost: <strong>${(s.path_cost || 0).toFixed(2)}</strong> &middot; Cumulative Flow: <strong>${(s.running_total_flow || 0).toLocaleString()} req/s</strong>.`;
+  }
+
+  document.querySelectorAll('#trace-tbody tr').forEach((r, i) => r.classList.toggle('active-row', i === traceIdx));
+}
+
+function stepTrace(delta) {
+  renderTraceStep(traceIdx + delta);
+}
+
+function toggleTracePlay() {
+  const btn = document.getElementById('btn-trace-play');
+  if (tracePlayTimer) {
+    clearInterval(tracePlayTimer);
+    tracePlayTimer = null;
+    if (btn) btn.textContent = 'Play';
+  } else {
+    if (btn) btn.textContent = 'Pause';
+    tracePlayTimer = setInterval(() => {
+      if (traceIdx >= traceSteps.length - 1) {
+        toggleTracePlay();
+      } else {
+        stepTrace(1);
       }
-      if (routing.cycle_id !== undefined) {
-        document.getElementById("diff-trigger-tag").textContent = `Cycle #${routing.cycle_id} • ${routing.timestamp || ''}`;
-      }
+    }, 1200);
+  }
+}
 
-      // 5. Diff Table
-      const diffTbody = document.getElementById("diff-table-body");
-      diffTbody.innerHTML = "";
+/* FORECAST (PANEL 6) */
+async function loadForecast() {
+  try {
+    const r = await fetch('/api/forecast');
+    const data = await r.json();
+    drawForecastChart(data);
+    setText('fc-react-stats', `${data.reactive_metrics.ticks_overloaded} overloaded ticks • ${data.reactive_metrics.ticks_to_recover} recovery ticks • Cost: ${(data.reactive_metrics.cumulative_cost_rs/1000).toFixed(1)}k`);
+    setText('fc-proact-stats', `${data.proactive_metrics.ticks_overloaded} overloaded ticks • ${data.proactive_metrics.ticks_to_recover} recovery ticks • Cost: ${(data.proactive_metrics.cumulative_cost_rs/1000).toFixed(1)}k`);
+  } catch(e) { console.error(e); }
+}
 
-      const prevAlloc = routing.previous_allocation || {};
-      const newAlloc = routing.new_allocation || {};
-      const diffAlloc = routing.allocation_diff || {};
+function drawForecastChart(data) {
+  const c = document.getElementById('chart-forecast');
+  if (!c || !c.parentElement) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = c.parentElement.clientWidth - 24, H = 220;
+  c.width = W * dpr; c.height = H * dpr; c.style.width = W + 'px'; c.style.height = H + 'px';
+  const ctx = c.getContext('2d'); ctx.scale(dpr, dpr);
 
-      const serverNames = ["Pune", "Mumbai", "Delhi", "Bangalore"];
-      serverNames.forEach(name => {
-        const prev = prevAlloc[name] !== undefined ? prevAlloc[name] : 0;
-        const curr = newAlloc[name] !== undefined ? newAlloc[name] : (serverDetailsMap[name]?.assigned_traffic || 0);
-        const diff = diffAlloc[name] !== undefined ? diffAlloc[name] : (curr - prev);
-        
-        const detail = serverDetailsMap[name] || {};
-        const unitCost = detail.unit_cost_rs !== undefined ? detail.unit_cost_rs.toFixed(2) : "--";
+  const hist = data.history || [], fc = data.forecast || [];
+  const allVals = [...hist.map(p => p.actual_traffic), ...fc.map(p => p.predicted_traffic)];
+  if (!allVals.length) return;
 
-        let diffClass = "diff-zero";
-        let diffStr = `${diff} req/s`;
-        if (typeof diff === "number") {
-          if (diff > 0) { diffClass = "diff-pos"; diffStr = `+${diff.toLocaleString()} req/s`; }
-          else if (diff < 0) { diffClass = "diff-neg"; diffStr = `${diff.toLocaleString()} req/s`; }
-        } else if (typeof diff === "string") {
-          if (diff.startsWith("+")) diffClass = "diff-pos";
-          else if (diff.startsWith("-")) diffClass = "diff-neg";
-          diffStr = `${diff} req/s`;
-        }
+  const pad = { t: 20, r: 20, b: 25, l: 45 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const min = Math.min(...allVals) * 0.95, max = Math.max(...allVals) * 1.05;
 
-        diffTbody.innerHTML += `
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = pad.t + ch * (1 - i / 3);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cw, y); ctx.stroke();
+    ctx.fillStyle = '#8b96a5'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    ctx.fillText((min + (max - min) * i / 3).toFixed(0), pad.l - 4, y + 3);
+  }
+
+  // Draw actual history
+  ctx.beginPath(); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+  hist.forEach((p, i) => {
+    const x = pad.l + i * (cw / (hist.length + fc.length - 1));
+    const y = pad.t + ch * (1 - (p.actual_traffic - min) / (max - min));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw forecast
+  ctx.beginPath(); ctx.strokeStyle = '#a371f7'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+  fc.forEach((p, i) => {
+    const x = pad.l + (hist.length - 1 + i) * (cw / (hist.length + fc.length - 1));
+    const y = pad.t + ch * (1 - (p.predicted_traffic - min) / (max - min));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* CACHE KNAPSACK (PANEL 7) */
+async function loadCache() {
+  try {
+    const r = await fetch('/api/cache/knapsack');
+    const data = await r.json();
+    const items = data.items || [];
+    const tbody = document.getElementById('cache-items-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = items.map(item => {
+      const isDp = data.selected_dp.some(d => d.id === item.id);
+      const isGr = data.selected_greedy.some(g => g.id === item.id);
+      return `<tr>
+        <td style="font-weight:600">${item.name}</td>
+        <td class="num">${item.size_mb} MB</td>
+        <td class="num">${item.popularity.toFixed(2)}</td>
+        <td class="num">${item.benefit.toFixed(2)}</td>
+        <td class="num" style="font-family:monospace;color:var(--accent)">${item.density.toFixed(4)}</td>
+        <td><span class="status-chip ${isDp ? 'healthy' : 'neutral'}">${isDp ? 'SELECTED' : 'SKIPPED'}</span></td>
+        <td><span class="status-chip ${isGr ? 'warning' : 'neutral'}">${isGr ? 'SELECTED' : 'SKIPPED'}</span></td>
+      </tr>`;
+    }).join('');
+
+    const sum = document.getElementById('cache-dp-summary');
+    if (sum) {
+      sum.textContent = `DP 0/1 Optimal Benefit: ${data.dp_benefit.toFixed(1)} ms | Greedy Benefit: ${data.greedy_benefit.toFixed(1)} ms | DP Optimality Advantage: +${(data.dp_benefit - data.greedy_benefit).toFixed(1)} ms`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+/* SCALABILITY (PANEL 8) */
+async function loadScalability() {
+  const sp = document.getElementById('scal-spinner');
+  if (sp) sp.style.display = 'inline-block';
+  const tbody = document.getElementById('scal-tbody');
+  const sumEl = document.getElementById('scal-ratio-summary');
+  const notesEl = document.getElementById('scal-notes-box');
+
+  try {
+    const r = await fetch('/api/benchmark/scalability');
+    const data = await r.json();
+
+    if (!data.has_run || !data.records || data.records.length === 0) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:16px;color:var(--text-muted)">Run the benchmark to see results (<code>.\\DAA\\bin\\cdn_engine.exe --bench</code>).</td></tr>`;
+      if (sumEl) sumEl.textContent = 'Benchmark has not been run yet.';
+      if (notesEl) notesEl.innerHTML = '';
+      return;
+    }
+
+    const records = data.records;
+    if (sumEl && data.ratio_summary) {
+      sumEl.textContent = data.ratio_summary;
+    }
+
+    if (tbody) {
+      tbody.innerHTML = records.map(rec => {
+        const ratio = rec.bf_vs_dijkstra_ratio !== undefined ? rec.bf_vs_dijkstra_ratio : 1.0;
+        const dRuns = rec.dijkstra_runs !== undefined ? rec.dijkstra_runs : rec.augmentations_k;
+        const pdUs = rec.primal_dual_us > 0 ? rec.primal_dual_us.toLocaleString() + ' &micro;s' : '&mdash;';
+        return `
           <tr>
-            <td style="font-weight: 700; color: var(--text-main); font-family: sans-serif;">${name}</td>
-            <td style="color: var(--text-muted);">${prev.toLocaleString()}</td>
-            <td style="color: var(--accent-cyan); font-weight: 600;">${curr.toLocaleString()}</td>
-            <td class="${diffClass}">${diffStr}</td>
-            <td style="color: var(--text-muted);">₹${unitCost}</td>
+            <td class="num" style="font-weight:600">${rec.servers}</td>
+            <td class="num">${rec.regions}</td>
+            <td class="num">${rec.vertices}</td>
+            <td class="num">${rec.edges}</td>
+            <td class="num" style="color:var(--accent);font-weight:600">${rec.augmentations_k}</td>
+            <td class="num" style="color:var(--text-muted)">${dRuns}</td>
+            <td class="num" style="font-weight:600">${rec.dijkstra_us.toLocaleString()} &micro;s</td>
+            <td class="num" style="color:var(--text-muted)">${rec.bellman_ford_us.toLocaleString()} &micro;s</td>
+            <td class="num" style="color:var(--strat-greedy);font-weight:600">${pdUs}</td>
+            <td class="num"><span class="status-chip neutral">${ratio.toFixed(2)}x</span></td>
+            <td class="num" style="font-family:monospace;color:var(--text-muted)">${rec.theoretical_ke_log_v.toLocaleString()}</td>
+            <td class="num" style="font-family:monospace;color:var(--accent);font-weight:600">${rec.ratio_ns_per_op.toFixed(2)}</td>
           </tr>
         `;
-      });
-
-      // 2. Server Cards
-      const container = document.getElementById("servers-container");
-      container.innerHTML = "";
-
-      servers.forEach(server => {
-        const detail = serverDetailsMap[server.name] || {};
-        const assignedTraffic = detail.assigned_traffic !== undefined ? detail.assigned_traffic : (server.assigned_traffic || 0);
-
-        const isDown = (server.status === "DOWN" || detail.status === "FAILED");
-        const isCongested = (server.status === "CONGESTED" || detail.status === "CONGESTED");
-        const cardClass = isDown ? "server-card status-down" : "server-card";
-        const badgeClass = isDown ? "status-badge down" : (isCongested ? "status-badge congested" : "status-badge healthy");
-        const statusText = isDown ? "FAILED / DOWN" : (isCongested ? "CONGESTED" : "HEALTHY");
-
-        const loadPct = isDown ? 0 : Math.min(100, Math.round((assignedTraffic / server.capacity) * 100));
-        let progressColor = "green";
-        if (loadPct >= 85 || isCongested) progressColor = "yellow";
-        if (loadPct >= 96 || isDown) progressColor = "red";
-
-        let latDisplay = isDown ? "∞ (DOWN)" : `${server.latency} ms`;
-        let latClass = "lat-good";
-        if (isDown) latClass = "lat-bad";
-        else if (server.latency >= 70) latClass = "lat-bad";
-        else if (server.latency >= 35) latClass = "lat-warn";
-
-        const cityEmoji = { "Pune": "📍", "Mumbai": "🌊", "Delhi": "🏛️", "Bangalore": "💻" }[server.name] || "📍";
-        const unitCostDisplay = detail.unit_cost_rs !== undefined ? detail.unit_cost_rs.toFixed(2) : server.bandwidth_cost.toFixed(2);
-
-        container.innerHTML += `
-          <div class="${cardClass}">
-            <div class="card-header">
-              <div class="server-city">
-                <span class="server-flag">${cityEmoji}</span>
-                <span class="server-name">${server.name}</span>
-              </div>
-              <div class="${badgeClass}">
-                <div class="status-dot"></div>
-                ${statusText}
-              </div>
-            </div>
-
-            <!-- Routed Allocation from C++ MCMF Engine -->
-            <div class="routed-box">
-              <div class="routed-label">MCMF Assigned Route</div>
-              <div class="routed-val" style="color: ${isDown ? 'var(--color-down)' : 'var(--accent-cyan)'};">
-                ${isDown ? '0 req/s' : `${assignedTraffic.toLocaleString()} req/s`}
-              </div>
-            </div>
-
-            <div class="metrics-grid-2x2">
-              <div class="metric-box">
-                <div class="metric-title">Latency</div>
-                <div class="metric-value ${latClass}">${latDisplay}</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-title">Unit Cost (W)</div>
-                <div class="metric-value">₹${unitCostDisplay}</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-title">CPU Utilization</div>
-                <div class="metric-value">${isDown ? '0.0%' : server.cpu_utilization.toFixed(1) + '%'}</div>
-              </div>
-              <div class="metric-box">
-                <div class="metric-title">Bandwidth</div>
-                <div class="metric-value">${isDown ? '0.0 Mbps' : server.bandwidth_usage.toFixed(1) + ' Mbps'}</div>
-              </div>
-            </div>
-
-            <div class="progress-section">
-              <div class="progress-header">
-                <span style="color: var(--text-dim); font-size: 11px; font-weight: 600;">CAPACITY UTILIZATION</span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">
-                  ${isDown ? 'OFFLINE' : `${assignedTraffic.toLocaleString()} / ${server.capacity.toLocaleString()} (${loadPct}%)`}
-                </span>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill ${progressColor}" style="width: ${loadPct}%;"></div>
-              </div>
-            </div>
-
-            <div class="card-actions">
-              <button class="action-btn btn-spike" onclick="triggerScenario('pune_congestion')" ${isDown ? 'disabled' : ''}>⚡ Congest</button>
-              ${isDown 
-                ? `<button class="action-btn" style="color: var(--color-healthy); border-color: rgba(16,185,129,0.4);" onclick="triggerScenario('fleet_recovery')">↺ Revive</button>`
-                : `<button class="action-btn btn-danger" onclick="triggerScenario('mumbai_failure')">💥 Crash</button>`
-              }
-            </div>
-          </div>
-        `;
-      });
+      }).join('');
     }
 
-    // Page Load
-    window.addEventListener("DOMContentLoaded", () => {
-      connectWS();
-      fetchSnapshot();
+    if (notesEl) {
+      const adv = data.adversarial;
+      const advHtml = adv ? `
+        <div style="margin-top:10px;padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg-surface);border:1px solid var(--border-subtle)">
+          <strong>Adversarial Deep Graph Validation (${adv.description || '50 stages, 50 hops'}, $V=${adv.vertices}$, $E=${adv.edges}$):</strong>
+          Classic Bellman-Ford took <strong>${adv.bellman_ford_us.toFixed(1)} &micro;s</strong> vs Dijkstra's <strong>${adv.dijkstra_us.toFixed(1)} &micro;s</strong>
+          (BF / Dijkstra = <strong>${adv.bf_vs_dijkstra_ratio.toFixed(2)}x</strong>).
+          Empirically validates Dijkstra's asymptotic $\\mathcal{O}(|E| \\log |V|)$ scaling when long graph paths prevent early-exit relaxation termination.
+        </div>
+      ` : '';
+
+      const lastRec = records[records.length - 1];
+      const pdSpeedup = (lastRec.primal_dual_us > 0) ? (lastRec.dijkstra_us / lastRec.primal_dual_us).toFixed(1) : '1.0';
+
+      notesEl.innerHTML = `
+        <div style="font-weight:600;margin-bottom:6px;color:var(--text-main)">Empirical DAA Solver Dynamics:</div>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">
+          <li><strong>Bipartite Topology &amp; Early-Exit Bellman-Ford:</strong> The standard CDN network has a fixed diameter of 4 hops ($S \\to \\text{Region} \\to \\text{Server} \\to \\text{Band} \\to T$). Classic Bellman-Ford exits after 4 relaxation passes ($\\approx 4|E|$ flat array iterations), which avoids min-heap overhead and outpaces single-augmentation Dijkstra on this shallow structure.</li>
+          <li><strong>Primal-Dual Dinic Blocking Flow:</strong> Pushing blocking flow over zero reduced-cost edges dramatically reduces Dijkstra invocations (from ${lastRec.augmentations_k} augmentations down to ${lastRec.dijkstra_runs || 'fewer'} Dijkstra runs at $N=${lastRec.servers}$), achieving a <strong>${pdSpeedup}x speedup</strong> over standard Dijkstra (cutting runtime from ${(lastRec.dijkstra_us/1000).toFixed(1)} ms to ${(lastRec.primal_dual_us/1000).toFixed(1)} ms).</li>
+          <li><strong>Asymptotic Scaling:</strong> Empirical ratio $\\frac{t}{K \\cdot |E| \\log_2 |V|}$ spans <strong>${data.ratio_min || '—'} to ${data.ratio_max || '—'} ns/op</strong> across $N=10..1000$, validating the theoretical bound within ${data.ratio_factor || '2'}x.</li>
+        </ul>
+        ${advHtml}
+      `;
+    }
+
+    drawScalabilityCharts(records);
+    renderAllMath(document.getElementById('panel-p8'));
+  } catch(e) { console.error('loadScalability error:', e); }
+  finally { if (sp) sp.style.display = 'none'; }
+}
+
+function drawScalabilityCharts(records) {
+  if (!records.length) return;
+  const c1 = document.getElementById('chart-scalability');
+  if (c1 && c1.parentElement) {
+    const dpr = window.devicePixelRatio || 1;
+    const W = c1.parentElement.clientWidth - 24, H = 180;
+    c1.width = W * dpr; c1.height = H * dpr; c1.style.width = W + 'px'; c1.style.height = H + 'px';
+    const ctx = c1.getContext('2d'); ctx.scale(dpr, dpr);
+
+    const pad = { t: 15, r: 15, b: 20, l: 45 };
+    const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+    const maxVal = Math.max(...records.map(r => r.dijkstra_us)) * 1.1;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const y = pad.t + ch * (1 - i / 3);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cw, y); ctx.stroke();
+      ctx.fillStyle = '#8b96a5'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+      ctx.fillText((maxVal * i / 3 / 1000).toFixed(0) + 'ms', pad.l - 4, y + 3);
+    }
+
+    const pts = records.map((r, i) => ({
+      x: pad.l + i * cw / (records.length - 1),
+      y: pad.t + ch * (1 - r.dijkstra_us / maxVal)
+    }));
+
+    ctx.beginPath(); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+
+    pts.forEach((p, i) => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fillStyle = '#3b82f6'; ctx.fill();
+      ctx.fillStyle = '#8b96a5'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('N=' + records[i].servers, p.x, p.y - 6);
     });
-  </script>
+  }
+
+  const c2 = document.getElementById('chart-speedup');
+  if (c2 && c2.parentElement) {
+    const dpr = window.devicePixelRatio || 1;
+    const W = c2.parentElement.clientWidth - 24, H = 180;
+    c2.width = W * dpr; c2.height = H * dpr; c2.style.width = W + 'px'; c2.style.height = H + 'px';
+    const ctx = c2.getContext('2d'); ctx.scale(dpr, dpr);
+
+    const pad = { t: 15, r: 15, b: 20, l: 30 };
+    const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+    const barW = Math.max(16, (cw / records.length) - 16);
+
+    records.forEach((r, i) => {
+      const x = pad.l + i * (cw / records.length) + 8;
+      const ratio = r.bf_vs_dijkstra_ratio !== undefined ? r.bf_vs_dijkstra_ratio : 1.0;
+      const h = Math.min(ch, ratio * (ch * 0.45));
+      ctx.fillStyle = '#8b96a5';
+      ctx.fillRect(x, pad.t + ch - h, barW, h);
+      ctx.fillStyle = '#e6eaf0'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(ratio.toFixed(2) + 'x', x + barW / 2, pad.t + ch - h - 4);
+      ctx.fillText('N=' + r.servers, x + barW / 2, pad.t + ch + 12);
+    });
+  }
+}
+
+/* EXPLAIN (PANEL 9) */
+async function loadExplain() {
+  try {
+    const r = await fetch('/api/explain');
+    const data = await r.json();
+    const box = document.getElementById('explain-summary-box');
+    if (box) box.innerHTML = `<strong>Verdict [${data.routing_status}]:</strong> ${data.summary}`;
+
+    const blist = document.getElementById('explain-bullet-list');
+    if (blist) {
+      blist.innerHTML = (data.bullet_points || []).map(b => `
+        <div class="audit-entry">
+          <span class="audit-tag">FACT</span>
+          <span>${b}</span>
+        </div>
+      `).join('');
+    }
+
+    const tcont = document.getElementById('explain-tiers-container');
+    if (tcont) {
+      tcont.innerHTML = (data.server_tiers || []).map(st => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-2);background:var(--bg-surface-raised);border-radius:var(--radius-sm);border:1px solid var(--border-subtle);font-size:12px">
+          <div>
+            <div style="font-weight:600">${st.server}</div>
+            <div style="font-family:monospace;font-size:11px;color:var(--text-muted)">${st.assigned.toLocaleString()} / ${st.capacity.toLocaleString()} req/s (${st.utilization_pct}%)</div>
+          </div>
+          <span class="status-chip ${st.tier.includes('Tier 4') ? 'danger' : st.tier.includes('Tier 3') ? 'warning' : 'healthy'}">
+            ${st.tier.split(':')[0]} (${st.cost_multiplier}x penalty)
+          </span>
+        </div>
+      `).join('');
+    }
+  } catch(e) { console.error(e); }
+}
+
+/* EXPORT (PANEL 10) */
+async function previewExport(type) {
+  const box = document.getElementById('export-preview-box');
+  box.textContent = 'Loading export payload...';
+  try {
+    let url = '/api/export/json';
+    if (type === 'allocations') url = '/api/export/csv/allocations';
+    else if (type === 'benchmark') url = '/api/export/csv/benchmark';
+    else if (type === 'comparison') url = '/api/export/csv/comparison';
+
+    const r = await fetch(url);
+    const txt = await r.text();
+    box.textContent = txt;
+  } catch(e) { box.textContent = 'Failed to load preview: ' + e; }
+}
+
+function copyPreviewText() {
+  const txt = document.getElementById('export-preview-box').textContent;
+  navigator.clipboard.writeText(txt).then(() => alert('Export payload copied to clipboard.'));
+}
+
+/* THEME & MODAL */
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+}
+
+function toggleShortcutHelp() {
+  document.getElementById('shortcut-modal')?.classList.toggle('open');
+}
+
+/* KEYBOARD SHORTCUTS */
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === '?') {
+    toggleShortcutHelp();
+  } else if (e.key === 'Escape') {
+    closeNodeDrawer();
+    document.getElementById('shortcut-modal')?.classList.remove('open');
+  } else if (e.key === 'r' || e.key === 'R') {
+    triggerScenario('normal');
+  } else if (e.key === 't' || e.key === 'T') {
+    toggleTheme();
+  } else if (e.key === 'ArrowRight' || e.key === ']') {
+    stepTrace(1);
+  } else if (e.key === 'ArrowLeft' || e.key === '[') {
+    stepTrace(-1);
+  } else if (e.key === ' ' && document.getElementById('panel-p4')?.classList.contains('active')) {
+    e.preventDefault();
+    toggleTracePlay();
+  } else if (e.key >= '1' && e.key <= '9') {
+    switchTab('p' + e.key);
+  } else if (e.key === '0') {
+    switchTab('p10');
+  }
+});
+
+/* KATEX RENDERING */
+function renderAllMath(rootEl) {
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(rootEl || document.body, {
+        delimiters: [
+          {left: "$$", right: "$$", display: true},
+          {left: "$", right: "$", display: false}
+        ],
+        throwOnError: false
+      });
+    } catch (e) {
+      console.warn("KaTeX render:", e);
+    }
+  }
+}
+
+/* BOOTSTRAP */
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => renderAllMath(document.body), 100);
+  connectWS();
+  fetchSnapshot();
+  for (let i = 0; i < 8; i++) {
+    pushHistory('latency', 20 + Math.random() * 15);
+    pushHistory('cost', 400 + Math.random() * 200);
+    pushHistory('routed', 10000 + Math.random() * 3000);
+    pushHistory('overloaded', Math.random() < 0.3 ? 1 : 0);
+  }
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,424 @@
+/* ==========================================================================
+   NETOPS DESIGN SYSTEM — COMPONENTS (components.css)
+   Tables, Badges, Buttons, Form Controls, Tooltips, Modals, Empty/Loading States
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. BUTTONS & ACTIONS
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background var(--trans-fast), border-color var(--trans-fast), color var(--trans-fast);
+}
+
+.btn:hover:not(:disabled) {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-strong);
+}
+
+.btn:active:not(:disabled) {
+  background-color: var(--bg-surface-active);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #ffffff;
+}
+
+.btn-danger {
+  background-color: transparent;
+  border-color: var(--status-danger-bdr);
+  color: var(--status-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--status-danger-bg);
+  border-color: var(--status-danger);
+}
+
+.btn-sm {
+  height: 24px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   2. FORM CONTROLS & INPUTS
+   -------------------------------------------------------------------------- */
+.form-select, .form-input {
+  height: 28px;
+  padding: 0 var(--space-2);
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color var(--trans-fast);
+}
+
+.form-select:hover, .form-input:hover {
+  border-color: var(--border-strong);
+}
+
+.form-select:focus, .form-input:focus {
+  border-color: var(--border-focus);
+}
+
+.form-range {
+  accent-color: var(--accent);
+  height: 4px;
+  cursor: pointer;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.control-row:last-child {
+  border-bottom: none;
+}
+
+.control-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.control-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.control-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   3. STATUS CHIPS & BADGES
+   -------------------------------------------------------------------------- */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-chip.healthy  { border-color: var(--status-healthy-bdr); background: var(--status-healthy-bg); color: var(--status-healthy); }
+.status-chip.healthy .status-dot { background-color: var(--status-healthy); }
+
+.status-chip.warning  { border-color: var(--status-warning-bdr); background: var(--status-warning-bg); color: var(--status-warning); }
+.status-chip.warning .status-dot { background-color: var(--status-warning); }
+
+.status-chip.danger   { border-color: var(--status-danger-bdr); background: var(--status-danger-bg); color: var(--status-danger); }
+.status-chip.danger .status-dot { background-color: var(--status-danger); }
+
+.status-chip.neutral  { border-color: var(--border-subtle); background: var(--bg-surface-raised); color: var(--text-muted); }
+.status-chip.neutral .status-dot { background-color: var(--status-neutral); }
+
+/* Strategy tags */
+.strat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+.strat-mcmf        { background: rgba(59,130,246,0.12); color: var(--strat-mcmf); border: 1px solid rgba(59,130,246,0.3); }
+.strat-roundrobin  { background: rgba(139,150,165,0.12); color: var(--strat-roundrobin); border: 1px solid rgba(139,150,165,0.3); }
+.strat-nearest     { background: rgba(210,153,34,0.12); color: var(--strat-nearest); border: 1px solid rgba(210,153,34,0.3); }
+.strat-greedy      { background: rgba(163,113,247,0.12); color: var(--strat-greedy); border: 1px solid rgba(163,113,247,0.3); }
+
+/* --------------------------------------------------------------------------
+   4. DENSE DATA TABLES
+   -------------------------------------------------------------------------- */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  text-align: left;
+}
+
+.data-table th {
+  height: 32px;
+  padding: 0 var(--space-3);
+  background-color: var(--bg-surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.data-table th.num, .data-table td.num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table td {
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.data-table tr.active-row {
+  background-color: var(--accent-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5. OPERATIONAL CHARTS (Canvas/SVG Surfaces)
+   -------------------------------------------------------------------------- */
+.chart-box {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   6. QUIET NOTE & FORMULA BOXES
+   -------------------------------------------------------------------------- */
+.quiet-note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.quiet-note strong {
+  color: var(--text-main);
+}
+
+/* --------------------------------------------------------------------------
+   7. AUDIT & DECISION LOG
+   -------------------------------------------------------------------------- */
+.audit-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.audit-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.audit-time {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.audit-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   8. LOADING, EMPTY & ERROR STATES
+   -------------------------------------------------------------------------- */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  text-align: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
+.state-title {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.state-desc {
+  font-size: var(--font-size-sm);
+  max-width: 420px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--status-danger-bg);
+  border: 1px solid var(--status-danger-bdr);
+  border-radius: var(--radius-sm);
+  color: var(--status-danger);
+  font-size: var(--font-size-sm);
+}
+
+/* --------------------------------------------------------------------------
+   9. TOOLTIPS
+   -------------------------------------------------------------------------- */
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted var(--text-faint);
+  text-underline-offset: 3px;
+}
+
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--font-ui);
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}

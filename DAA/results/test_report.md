@@ -15,13 +15,13 @@
 
 | # | Scenario Name | Demand (req/s) | Total Cap | Routed | Unrouted | Cost (Rs.) | Active Nodes | Paths (K) | Time (us) | Status | Verdict |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|:---|
-| 1 | Normal Traffic | 8000 | 21500 | 8000 | 0 | 298000.00 | 4 | 2 | 4.00 | `OPTIMAL` | **PASS** |
-| 2 | Traffic Spike | 16000 | 21500 | 16000 | 0 | 777750.00 | 4 | 3 | 4.36 | `CONGESTED_REROUTE` | **PASS** |
-| 3 | Pune Congestion | 10000 | 21500 | 10000 | 0 | 426800.00 | 4 | 2 | 2.41 | `CONGESTED_REROUTE` | **PASS** |
-| 4 | Mumbai Failure | 12000 | 15500 | 12000 | 0 | 787865.00 | 3 | 3 | 2.48 | `FAILOVER` | **PASS** |
-| 5 | Multiple Congestion | 11000 | 21500 | 11000 | 0 | 454000.00 | 4 | 2 | 2.26 | `CONGESTED_REROUTE` | **PASS** |
-| 6 | Fleet Overload | 26000 | 21500 | 21500 | 4500 | 2464860.00 | 4 | 4 | 2.60 | `INSUFFICIENT_CAPACITY` | **PASS** |
-| 7 | Fleet Recovery | 10000 | 21500 | 10000 | 0 | 386000.00 | 4 | 2 | 2.35 | `OPTIMAL` | **PASS** |
+| 1 | Normal Traffic | 8000 | 21500 | 8000 | 0 | 298000.00 | 4 | 2 | 4.23 | `OPTIMAL` | **PASS** |
+| 2 | Traffic Spike | 16000 | 21500 | 16000 | 0 | 777750.00 | 4 | 3 | 4.15 | `CONGESTED_REROUTE` | **PASS** |
+| 3 | Pune Congestion | 10000 | 21500 | 10000 | 0 | 426800.00 | 4 | 2 | 4.71 | `CONGESTED_REROUTE` | **PASS** |
+| 4 | Mumbai Failure | 12000 | 15500 | 12000 | 0 | 787865.00 | 3 | 3 | 3.33 | `FAILOVER` | **PASS** |
+| 5 | Multiple Congestion | 11000 | 21500 | 11000 | 0 | 454000.00 | 4 | 2 | 3.18 | `CONGESTED_REROUTE` | **PASS** |
+| 6 | Fleet Overload | 26000 | 21500 | 21500 | 4500 | 2464860.00 | 4 | 4 | 4.09 | `INSUFFICIENT_CAPACITY` | **PASS** |
+| 7 | Fleet Recovery | 10000 | 21500 | 10000 | 0 | 386000.00 | 4 | 2 | 2.41 | `OPTIMAL` | **PASS** |
 
 ## 3. Automated Invariant Verification Matrix
 
@@ -43,7 +43,7 @@
 - **Routed / Unrouted**: 8000 req/s / 0 req/s
 - **Routing Cost**: Rs. 298000.00
 - **Augmenting Iterations (K)**: 2 iterations
-- **Execution Time**: 4.00 microseconds
+- **Execution Time**: 4.23 microseconds
 - **Outcome Summary**: MCMF prioritized lowest-cost nodes (Mumbai saturated at 6000, remainder 2000 to Bangalore). Zero drop.
 
 ### Scenario 2: Traffic Spike
@@ -52,7 +52,7 @@
 - **Routed / Unrouted**: 16000 req/s / 0 req/s
 - **Routing Cost**: Rs. 777750.00
 - **Augmenting Iterations (K)**: 3 iterations
-- **Execution Time**: 4.36 microseconds
+- **Execution Time**: 4.15 microseconds
 - **Outcome Summary**: Traffic spike fully absorbed across Mumbai, Bangalore, and Pune. Zero packets dropped.
 
 ### Scenario 3: Pune Congestion
@@ -61,7 +61,7 @@
 - **Routed / Unrouted**: 10000 req/s / 0 req/s
 - **Routing Cost**: Rs. 426800.00
 - **Augmenting Iterations (K)**: 2 iterations
-- **Execution Time**: 2.41 microseconds
+- **Execution Time**: 4.71 microseconds
 - **Outcome Summary**: Pune's elevated latency increased its edge cost. MCMF routed 10k entirely through Mumbai (6k) & Bangalore (4k), completely bypassing Pune.
 
 ### Scenario 4: Mumbai Failure
@@ -70,7 +70,7 @@
 - **Routed / Unrouted**: 12000 req/s / 0 req/s
 - **Routing Cost**: Rs. 787865.00
 - **Augmenting Iterations (K)**: 3 iterations
-- **Execution Time**: 2.48 microseconds
+- **Execution Time**: 3.33 microseconds
 - **Outcome Summary**: Failover successful: 0 traffic routed to Mumbai. 12,000 req/s redistributed across Pune, Bangalore, and Delhi.
 
 ### Scenario 5: Multiple Congestion
@@ -79,7 +79,7 @@
 - **Routed / Unrouted**: 11000 req/s / 0 req/s
 - **Routing Cost**: Rs. 454000.00
 - **Augmenting Iterations (K)**: 2 iterations
-- **Execution Time**: 2.26 microseconds
+- **Execution Time**: 3.18 microseconds
 - **Outcome Summary**: Adaptive router shielded congested nodes (Pune & Delhi), routing 100% of 11,000 req/s via healthy nodes (Mumbai & Bangalore).
 
 ### Scenario 6: Fleet Overload
@@ -88,7 +88,7 @@
 - **Routed / Unrouted**: 21500 req/s / 4500 req/s
 - **Routing Cost**: Rs. 2464860.00
 - **Augmenting Iterations (K)**: 4 iterations
-- **Execution Time**: 2.60 microseconds
+- **Execution Time**: 4.09 microseconds
 - **Outcome Summary**: Max flow correctly saturated fleet capacity at 21,500 req/s. Safely isolated 4,500 unrouted req/s without claiming impossible traffic.
 
 ### Scenario 7: Fleet Recovery
@@ -97,6 +97,6 @@
 - **Routed / Unrouted**: 10000 req/s / 0 req/s
 - **Routing Cost**: Rs. 386000.00
 - **Augmenting Iterations (K)**: 2 iterations
-- **Execution Time**: 2.35 microseconds
+- **Execution Time**: 2.41 microseconds
 - **Outcome Summary**: All servers fully recovered to HEALTHY. Optimal min-cost routing baseline re-established.
 

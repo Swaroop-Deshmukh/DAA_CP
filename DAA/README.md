@@ -286,16 +286,7 @@ build.bat
 Or using manual compilation with GCC MinGW (C++17):
 
 ```cmd
-g++ -O2 -std=c++17 -Wall -Wextra -Iinclude ^
-    src\CDNServer.cpp ^
-    src\TrafficSimulator.cpp ^
-    src\Graph.cpp ^
-    src\MinCostMaxFlow.cpp ^
-    src\Router.cpp ^
-    src\SimulationScenario.cpp ^
-    src\Benchmark.cpp ^
-    src\main.cpp ^
-    -o bin\cdn_engine.exe
+g++ -O3 -std=c++17 -Wall -Wextra -Iinclude src/*.cpp -o bin\cdn_engine.exe
 ```
 
 ---
@@ -308,12 +299,22 @@ From within the `DAA/` directory:
 :: Run full demonstration (all 7 scenarios + benchmarks)
 bin\cdn_engine.exe --demo
 
+:: Run automated 7-point DAA invariant self-test suite
+bin\cdn_engine.exe --selftest
+
 :: Run only the 7 verification scenarios
 bin\cdn_engine.exe --scenarios
 
 :: Run only the performance benchmarking suite
 bin\cdn_engine.exe --bench
 
+:: Run algorithm trace mode on sample topology
+bin\cdn_engine.exe --trace
+
 :: Run the continuous adaptive simulation loop
 bin\cdn_engine.exe --loop
+
+:: Run persistent stdio JSON-IPC daemon for dashboard integration
+bin\cdn_engine.exe --ipc
 ```
+

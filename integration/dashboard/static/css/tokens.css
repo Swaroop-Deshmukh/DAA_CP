@@ -1,0 +1,132 @@
+/* ==========================================================================
+   NETOPS DESIGN SYSTEM — TOKENS (tokens.css)
+   Internal Network Operations Console · Information-dense, zero decoration
+   ========================================================================== */
+
+:root {
+  /* Surface & Base (Dark - Default) */
+  --bg-app:             #0e1116;
+  --bg-surface:         #151a21;
+  --bg-surface-raised:  #1b222b;
+  --bg-surface-hover:   #212833;
+  --bg-surface-active:  #28313e;
+  --border-subtle:      #262e39;
+  --border-strong:      #364150;
+  --border-focus:       #3b82f6;
+
+  /* Typography */
+  --text-main:          #e6eaf0;
+  --text-muted:         #8b96a5;
+  --text-faint:         #576273;
+  --text-inverse:       #0e1116;
+  --font-ui:            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "IBM Plex Sans", sans-serif;
+  --font-mono:          "JetBrains Mono", "IBM Plex Mono", Consolas, "SFMono-Regular", monospace;
+  --font-size-xs:       11px;
+  --font-size-sm:       12px;
+  --font-size-base:     13px;
+  --font-size-md:       14px;
+  --font-size-lg:       16px;
+  --font-size-xl:       20px;
+  --line-height-tight:  1.25;
+  --line-height-normal: 1.45;
+
+  /* Single Primary Brand / Interactive Accent (Operations Blue) */
+  --accent:             #3b82f6;
+  --accent-hover:       #2563eb;
+  --accent-muted:       rgba(59, 130, 246, 0.12);
+  --accent-border:      rgba(59, 130, 246, 0.35);
+
+  /* Semantic Status (Reserved strictly for state, health, queue saturation) */
+  --status-healthy:     #3fb950;
+  --status-healthy-bg:  rgba(63, 185, 80, 0.12);
+  --status-healthy-bdr: rgba(63, 185, 80, 0.3);
+
+  --status-warning:     #d29922;
+  --status-warning-bg:  rgba(210, 153, 34, 0.12);
+  --status-warning-bdr: rgba(210, 153, 34, 0.3);
+
+  --status-danger:      #f85149;
+  --status-danger-bg:   rgba(248, 81, 73, 0.12);
+  --status-danger-bdr:  rgba(248, 81, 73, 0.3);
+
+  --status-neutral:     #6e7681;
+  --status-neutral-bg:  rgba(110, 118, 129, 0.12);
+  --status-neutral-bdr: rgba(110, 118, 129, 0.3);
+
+  /* Strategy Palette (Color-blind safe, universally applied across tables & charts) */
+  --strat-mcmf:         #3b82f6; /* Blue */
+  --strat-roundrobin:   #8b96a5; /* Grey */
+  --strat-nearest:      #d29922; /* Amber */
+  --strat-greedy:       #a371f7; /* Violet */
+
+  /* Sizing, Radius & Spacing */
+  --radius-xs:          2px;
+  --radius-sm:          4px;    /* Chips, badges, buttons */
+  --radius-md:          6px;    /* Surfaces, panels, modal boxes */
+  --space-1:            4px;
+  --space-2:            8px;
+  --space-3:            12px;
+  --space-4:            16px;
+  --space-5:            20px;
+  --space-6:            24px;
+  --header-height:      48px;
+  --sidebar-width:      200px;
+  --summary-height:     42px;
+
+  /* Transitions */
+  --trans-fast:         150ms ease;
+  --trans-normal:       200ms ease;
+}
+
+/* Optional Light Mode */
+[data-theme="light"] {
+  --bg-app:             #f6f8fa;
+  --bg-surface:         #ffffff;
+  --bg-surface-raised:  #f3f4f6;
+  --bg-surface-hover:   #e5e7eb;
+  --bg-surface-active:  #dbeafe;
+  --border-subtle:      #d0d7de;
+  --border-strong:      #afb8c1;
+  --border-focus:       #0969da;
+
+  --text-main:          #1f2328;
+  --text-muted:         #656d76;
+  --text-faint:         #8c959f;
+  --text-inverse:       #ffffff;
+
+  --accent:             #0969da;
+  --accent-hover:       #0550ae;
+  --accent-muted:       rgba(9, 105, 218, 0.1);
+  --accent-border:      rgba(9, 105, 218, 0.3);
+
+  --status-healthy:     #1a7f37;
+  --status-healthy-bg:  rgba(26, 127, 55, 0.1);
+  --status-healthy-bdr: rgba(26, 127, 55, 0.3);
+
+  --status-warning:     #9a6700;
+  --status-warning-bg:  rgba(154, 103, 0, 0.1);
+  --status-warning-bdr: rgba(154, 103, 0, 0.3);
+
+  --status-danger:      #cf222e;
+  --status-danger-bg:   rgba(207, 34, 46, 0.1);
+  --status-danger-bdr:  rgba(207, 34, 46, 0.3);
+
+  --status-neutral:     #656d76;
+  --status-neutral-bg:  rgba(101, 109, 118, 0.1);
+  --status-neutral-bdr: rgba(101, 109, 118, 0.3);
+
+  --strat-mcmf:         #0969da;
+  --strat-roundrobin:   #656d76;
+  --strat-nearest:      #9a6700;
+  --strat-greedy:       #8250df;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

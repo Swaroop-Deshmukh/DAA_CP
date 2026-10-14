@@ -5,6 +5,7 @@
 std::string RoutingDecision::toJson() const {
     std::stringstream ss;
     ss << "{\n"
+       << "  \"schema_version\": " << schemaVersion << ",\n"
        << "  \"cycle_id\": " << cycleId << ",\n"
        << "  \"timestamp\": \"" << timestamp << "\",\n"
        << "  \"requested_traffic\": " << requestedTraffic << ",\n"
@@ -61,8 +62,74 @@ std::string RoutingDecision::toJson() const {
            << "    }" << (i + 1 < serverDetails.size() ? "," : "") << "\n";
     }
     ss << "  ],\n"
-       << "  \"execution_time_ms\": " << std::fixed << std::setprecision(3) << executionTimeMs << "\n"
-       << "}";
+       << "  \"execution_time_ms\": " << std::fixed << std::setprecision(3) << executionTimeMs << ",\n"
+       << "  \"engine_solve_time_us\": " << std::fixed << std::setprecision(1) << (engineSolveTimeUs > 0.0 ? engineSolveTimeUs : executionTimeMs * 1000.0);
+
+    // Phase 5 Requirement: trace array in the JSON
+    if (!traceSteps.empty()) {
+        ss << ",\n  \"trace\": [\n";
+        for (size_t i = 0; i < traceSteps.size(); ++i) {
+            const auto& step = traceSteps[i];
+            ss << "    {\n";
+            ss << "      \"iteration\": " << step.iteration << ",\n";
+            ss << "      \"dist\": [";
+            for (size_t d = 0; d < step.dist.size(); ++d) {
+                if (d > 0) ss << ", ";
+                if (step.dist[d] >= 1000000000000000LL - 1000000) ss << "-1";
+                else ss << step.dist[d];
+            }
+            ss << "],\n";
+            ss << "      \"potentials_before\": [";
+            for (size_t p = 0; p < step.potentialsBefore.size(); ++p) {
+                if (p > 0) ss << ", ";
+                ss << step.potentialsBefore[p];
+            }
+            ss << "],\n";
+            ss << "      \"potentials_after\": [";
+            for (size_t p = 0; p < step.potentialsAfter.size(); ++p) {
+                if (p > 0) ss << ", ";
+                ss << step.potentialsAfter[p];
+            }
+            ss << "],\n";
+            ss << "      \"chosen_path_nodes\": [";
+            for (size_t n = 0; n < step.pathNodes.size(); ++n) {
+                if (n > 0) ss << ", ";
+                ss << step.pathNodes[n];
+            }
+            ss << "],\n";
+            ss << "      \"chosen_path_names\": [";
+            for (size_t n = 0; n < step.pathNames.size(); ++n) {
+                if (n > 0) ss << ", ";
+                ss << "\"" << step.pathNames[n] << "\"";
+            }
+            ss << "],\n";
+            ss << "      \"reduced_path_cost\": " << step.reducedPathCost << ",\n";
+            ss << "      \"real_path_cost\": " << step.realPathCost << ",\n";
+            ss << "      \"bottleneck_delta\": " << step.bottleneckDelta << ",\n";
+            ss << "      \"flow_pushed\": " << step.flowPushed << ",\n";
+            ss << "      \"cumulative_flow\": " << step.cumulativeFlow << ",\n";
+            ss << "      \"cumulative_cost\": " << step.cumulativeCost << ",\n";
+            ss << "      \"residual_graph\": [\n";
+            for (size_t r = 0; r < step.residualGraph.size(); ++r) {
+                const auto& e = step.residualGraph[r];
+                ss << "        {\"from\": " << e.from
+                   << ", \"to\": " << e.to
+                   << ", \"from_name\": \"" << e.fromName << "\""
+                   << ", \"to_name\": \"" << e.toName << "\""
+                   << ", \"capacity\": " << e.capacity
+                   << ", \"flow\": " << e.flow
+                   << ", \"residual_capacity\": " << e.residualCapacity
+                   << ", \"cost\": " << e.cost
+                   << "}" << (r + 1 < step.residualGraph.size() ? "," : "") << "\n";
+            }
+            ss << "      ]\n";
+            ss << "    }" << (i + 1 < traceSteps.size() ? "," : "") << "\n";
+        }
+        ss << "  ]\n";
+    } else {
+        ss << "\n";
+    }
+    ss << "}";
     return ss.str();
 }
 
@@ -168,6 +235,7 @@ RoutingDecision Router::route(
     decision.changeDetected = true;
     decision.triggerReason = reason;
     decision.executionTimeMs = mcmf.getExecutionTimeMs();
+    decision.engineSolveTimeUs = mcmf.getExecutionTimeMs() * 1000.0;
     decision.previousAllocation = lastDecision.newAllocation;
     decision.newAllocation = newAlloc;
 

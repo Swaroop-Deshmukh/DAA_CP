@@ -1,36 +1,197 @@
 {
-  "cycle_id": 7,
-  "timestamp": "2026-10-01 22:36:00",
-  "requested_traffic": 10000,
-  "routed_traffic": 10000,
+  "schema_version": 2,
+  "status": "ok",
+  "cmd": "tick",
+  "cycle_id": 392,
+  "active_strategy": "MCMF",
+  "engine_solve_time_us": 78.9,
+  "execution_time_ms": 0.079,
+  "e2e_engine_latency_ms": 0.093,
+  "telemetry": {
+    "tick": 362,
+    "timestamp": "13:54:13",
+    "fleet_health": "DEGRADED",
+    "total_capacity": 15500.0,
+    "total_traffic": 8073.1,
+    "total_bandwidth": 1513.7,
+    "avg_latency": 27.0,
+    "avg_cpu": 52.1,
+    "active_count": 3,
+    "down_count": 1,
+    "congested_count": 0,
+    "redis_connected": false,
+    "diurnal_multiplier": 0.827,
+    "servers": [
+      {
+        "id": 1,
+        "name": "Pune",
+        "location": "West India",
+        "capacity": 5000.000,
+        "current_requests": 2654.661,
+        "assigned_traffic": 2654.661,
+        "routed_traffic": 2654.661,
+        "available_capacity": 2345.339,
+        "base_latency": 25.000,
+        "latency": 25.000,
+        "bandwidth_cost": 8.00,
+        "cpu_utilization": 53.1,
+        "bandwidth_usage": 497.7,
+        "bandwidth_capacity": 1000.0,
+        "status": "HEALTHY",
+        "is_failed": false,
+        "is_congested": false
+      },
+      {
+        "id": 2,
+        "name": "Mumbai",
+        "location": "West Coastal",
+        "capacity": 6000.0,
+        "current_requests": 0.0,
+        "assigned_traffic": 0.0,
+        "routed_traffic": 0.0,
+        "available_capacity": 0.0,
+        "base_latency": 18.0,
+        "latency": 9999.0,
+        "bandwidth_cost": 6.00,
+        "cpu_utilization": 0.0,
+        "bandwidth_usage": 0.0,
+        "bandwidth_capacity": 1200.0,
+        "status": "DOWN",
+        "is_failed": true,
+        "is_congested": false
+      },
+      {
+        "id": 3,
+        "name": "Delhi",
+        "location": "North India",
+        "capacity": 5500.0,
+        "current_requests": 2902.2,
+        "assigned_traffic": 2902.2,
+        "routed_traffic": 2902.2,
+        "available_capacity": 2597.8,
+        "base_latency": 32.0,
+        "latency": 32.0,
+        "bandwidth_cost": 9.00,
+        "cpu_utilization": 52.8,
+        "bandwidth_usage": 544.2,
+        "bandwidth_capacity": 1100.0,
+        "status": "HEALTHY",
+        "is_failed": false,
+        "is_congested": false
+      },
+      {
+        "id": 4,
+        "name": "Bangalore",
+        "location": "South Tech Hub",
+        "capacity": 5000.0,
+        "current_requests": 2516.2,
+        "assigned_traffic": 2516.2,
+        "routed_traffic": 2516.2,
+        "available_capacity": 2483.8,
+        "base_latency": 24.0,
+        "latency": 24.0,
+        "bandwidth_cost": 7.50,
+        "cpu_utilization": 50.3,
+        "bandwidth_usage": 471.8,
+        "bandwidth_capacity": 1000.0,
+        "status": "HEALTHY",
+        "is_failed": false,
+        "is_congested": false
+      }
+    ],
+    "recent_events": [
+      {
+        "tick": 184,
+        "timestamp": "13:49:44",
+        "source": "SCENARIO",
+        "message": "Scenario reset to NORMAL traffic conditions",
+        "level": "INFO"
+      },
+      {
+        "tick": 289,
+        "timestamp": "13:52:23",
+        "source": "Pune",
+        "message": "Traffic set to 100 req/s",
+        "level": "INFO"
+      },
+      {
+        "tick": 289,
+        "timestamp": "13:52:23",
+        "source": "Mumbai",
+        "message": "Traffic set to 14219 req/s",
+        "level": "INFO"
+      },
+      {
+        "tick": 289,
+        "timestamp": "13:52:23",
+        "source": "Delhi",
+        "message": "Traffic set to 100 req/s",
+        "level": "INFO"
+      },
+      {
+        "tick": 289,
+        "timestamp": "13:52:23",
+        "source": "Bangalore",
+        "message": "Traffic set to 11280 req/s",
+        "level": "INFO"
+      },
+      {
+        "tick": 295,
+        "timestamp": "13:52:33",
+        "source": "SCENARIO",
+        "message": "Traffic Spike triggered across fleet",
+        "level": "WARNING"
+      },
+      {
+        "tick": 312,
+        "timestamp": "13:52:58",
+        "source": "Mumbai",
+        "message": "SERVER OUTAGE: Mumbai edge node crashed (DOWN)",
+        "level": "CRITICAL"
+      },
+      {
+        "tick": 313,
+        "timestamp": "13:52:59",
+        "source": "Mumbai",
+        "message": "Status transition: HEALTHY -> FAILED (Traffic: 0 req/s)",
+        "level": "CRITICAL"
+      }
+    ]
+  },
+  "routing": {
+  "schema_version": 2,
+  "cycle_id": 392,
+  "timestamp": "2026-10-01T22:45:00Z",
+  "requested_traffic": 8073,
+  "routed_traffic": 8073,
   "unrouted_traffic": 0,
-  "total_cost_rs": 386000.00,
-  "routing_status": "OPTIMAL",
+  "total_cost_rs": 361358.00,
+  "routing_status": "FAILOVER",
   "change_detected": true,
-  "trigger_reason": "Traffic demand changed: 26000 -> 10000 req/s",
-  "previous_allocation": {"Bangalore": 5000, "Delhi": 5500, "Mumbai": 6000, "Pune": 5000},
-  "new_allocation": {"Bangalore": 4000, "Delhi": 0, "Mumbai": 6000, "Pune": 0},
-  "allocation_diff": {"Bangalore": -1000, "Delhi": -5500, "Mumbai": 0, "Pune": -5000},
+  "trigger_reason": "Traffic demand changed: 7865 -> 8073 req/s",
+  "previous_allocation": {"Bangalore": 5000, "Delhi": 0, "Pune": 2865},
+  "new_allocation": {"Bangalore": 5000, "Delhi": 0, "Pune": 3073},
+  "allocation_diff": {"Bangalore": 0, "Delhi": 0, "Mumbai": 0, "Pune": 208},
   "server_details": [
     {
       "server": "Pune",
-      "assigned_traffic": 0,
+      "assigned_traffic": 3073,
       "capacity": 5000,
-      "utilization_pct": 0.0,
+      "utilization_pct": 61.5,
       "latency_ms": 25.0,
       "unit_cost_rs": 41.00,
-      "subtotal_cost_rs": 0.00,
+      "subtotal_cost_rs": 125993.00,
       "status": "HEALTHY"
     },
     {
       "server": "Mumbai",
-      "assigned_traffic": 6000,
-      "capacity": 6000,
-      "utilization_pct": 100.0,
-      "latency_ms": 18.0,
-      "unit_cost_rs": 30.00,
-      "subtotal_cost_rs": 180000.00,
-      "status": "HEALTHY"
+      "assigned_traffic": 0,
+      "capacity": 0,
+      "utilization_pct": 0.0,
+      "latency_ms": 9999.0,
+      "unit_cost_rs": 9999.99,
+      "subtotal_cost_rs": 0.00,
+      "status": "FAILED"
     },
     {
       "server": "Delhi",
@@ -44,14 +205,16 @@
     },
     {
       "server": "Bangalore",
-      "assigned_traffic": 4000,
+      "assigned_traffic": 5000,
       "capacity": 5000,
-      "utilization_pct": 80.0,
+      "utilization_pct": 100.0,
       "latency_ms": 24.0,
       "unit_cost_rs": 39.00,
-      "subtotal_cost_rs": 156000.00,
+      "subtotal_cost_rs": 195000.00,
       "status": "HEALTHY"
     }
   ],
-  "execution_time_ms": 0.000
+  "execution_time_ms": 0.079,
+  "engine_solve_time_us": 78.9
+}
 }

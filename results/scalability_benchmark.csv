@@ -1,0 +1,7 @@
+Servers,Regions,Vertices,Edges,Augmentations_K,Dijkstra_Runs,TotalDemand,RoutedFlow,BuildTime_Median_us,Dijkstra_Solve_Median_us,BellmanFord_Solve_Median_us,PrimalDual_Solve_Median_us,BF_vs_Dijkstra_Ratio,Theoretical_KElogV,Measured_Theoretical_Ratio,Ratio_ns_per_op
+10,5,18,142,9,9,9219,9219,22.21,17.21,11.58,19.70,0.67,5329.16,3.229041e-003,3.2290
+50,25,78,718,62,51,52073,52073,115.87,764.33,321.52,857.15,0.42,279800.97,2.731704e-003,2.7317
+100,50,153,1438,125,99,106207,106207,364.35,3606.40,1394.00,2418.50,0.39,1304515.46,2.764551e-003,2.7646
+500,250,753,7140,590,267,500966,500966,1500.30,75659.00,39855.00,49919.00,0.53,40257737.41,1.879365e-003,1.8794
+1000,500,1503,14272,1229,326,994755,994755,5357.33,525025.00,331964.00,149421.00,0.63,185113697.26,2.836230e-003,2.8362
+# Adversarial,Deep Layered Dense Topology (50 stages, depth 50 hops),Vertices=302,Edges=3552,Dijkstra_us=553.2273,BF_us=661.4667,BF_vs_Dijkstra_Ratio=1.1957
